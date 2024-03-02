@@ -1,0 +1,41 @@
+<!--
+ * @Author: shihan
+ * @Date: 2023-12-10 12:45:04
+ * @version: 1.0
+ * @description: 
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="../static/style.css" />
+    <link rel="stylesheet" type="text/css" href="../static/icofont.css" />
+    <title>Login</title>
+</head>
+<style>
+    /* Your CSS styles go here */
+</style>
+<body>
+    <div id="bigBox">
+        <h1>LOGIN</h1>
+        <form id="loginForm" action="/loginsubmit" method="post">
+            <div class="inputBox">
+                <div class="inputText">
+                    <span class="iconfont icon-nickname"></span>
+                    <input type="text" name="user_id" id="user_id" placeholder="Username" />
+                </div>
+                <div class="inputText">
+                    <span class="iconfont icon-visible"></span>
+                    <input type="password" name="password" id="password" placeholder="Password" />
+                </div>
+            </div>
+            <input class="loginButton" type="submit" value="Login" />
+        </form> <!-- Move the closing form tag here -->
+        <div class="msg">
+            <p></p>
+            Don't have an account? <a href="/register">Sign up</a>
+        </div>
+    </div>
+</body>
+</html>

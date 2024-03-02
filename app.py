@@ -1,13 +1,15 @@
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for
+import psycopg as db
 import requests
+import os
 
 app = Flask(__name__)
 
 API_BASE_URL = "http://deadline-api-server.c7f8dwe8dbfhhfcx.uksouth.azurecontainer.io:5000"
 
+app.secret_key = os.environ.get('FLASK_SECRET_KEY')
+
 def get_db_connection():
-    # config = configparser.ConfigParser()
-    # config.read("dbtool.ini")
     server_params = {
         "dbname": "sf23",
         "host": "db.doc.ic.ac.uk",
@@ -33,16 +35,18 @@ def login():
 # login submit
 @app.route("/loginsubmit", methods=["POST"])
 def login_submit():
-    user_id = request.form.get("user_id")
+    email = request.form.get("email")
     password = request.form.get("password")
     conn = get_db_connection()
     cursor = conn.cursor()
-    query = "SELECT * FROM notes_user WHERE user_id = %s AND password = %s"
-    cursor.execute(query, (user_id, password))
+    query = "SELECT * FROM notes_user WHERE email = %s AND password = %s"
+    cursor.execute(query, (email, password))
     user = cursor.fetchone()
     conn.close()
-    if user is not None:
-        return jsonify({"message": "Login successful"})
+    if user:
+        session['name'] = user[1]
+        session['email'] = user[2]
+        return redirect(url_for('dashboard'))
     else:
         return jsonify({"message": "User not found"}), 401
 
@@ -116,6 +120,13 @@ def register_submit():
             conn.close()
 
     return jsonify({'success': True, 'message': 'Registration successful'})    
+
+@app.route("/dashboard")
+def dashboard():
+    if 'email' not in session:
+        # Redirect to login page if not logged in
+        return redirect(url_for('login'))
+    return render_template("dashboard.html", username=session['name'], user_id=session['email'])
 
 @app.route("/view_deadlines", methods=["GET"])
 def view_deadlines():

@@ -131,26 +131,36 @@ def dashboard():
 @app.route("/view_deadlines", methods=["GET"])
 def view_deadlines():
     # Here you would retrieve deadlines from your API and pass them to your template
-    # Not implemented here for brevity
-    return render_template("deadlines.html")
+    if 'email' not in session:
+        return redirect(url_for('login'))
+    user_id=session['email']
+    params = {
+        'username': '{{ user_id }}'
+    }
+    response=requests.get(f"{API_BASE_URL}/all_deadlines", params=params)
+    if response.ok:
+        entries = response.json()
+        return render_template("deadlines.html", entries=entries, username=session['name'], user_id=session['email'])
+    else:
+        return jsonify({'error': 'Could not retrieve deadlines from the API'}), 500
 
-@app.route('/add_deadline', methods=['POST'])
-def add_deadline():
-    # Forward the request to the actual API
-    data = request.get_json()
-    response = requests.post(f"{API_BASE_URL}/add_deadline", json=data)
-    return jsonify(response.json()), response.status_code
+# @app.route('/add_deadline', methods=['POST'])
+# def add_deadline():
+#     # Forward the request to the actual API
+#     data = request.get_json()
+#     response = requests.post(f"{API_BASE_URL}/add_deadline", json=data)
+#     return jsonify(response.json()), response.status_code
 
-@app.route('/deadlines', methods=['GET'])
-def get_deadlines():
-    # Forward the request to the actual API
-    username = session.get('username')
-    deadline_type = request.args.get('type')  # 'all', 'current', or 'past'
-    endpoint = {
-        'all': 'all_deadlines',
-        'current': 'current_deadlines',
-        'past': 'past_deadlines'
-    }.get(deadline_type, 'all_deadlines')
+# @app.route('/deadlines', methods=['GET'])
+# def get_deadlines():
+#     # Forward the request to the actual API
+#     username = session.get('email')
+#     deadline_type = request.args.get('type')  # 'all', 'current', or 'past'
+#     endpoint = {
+#         'all': 'all_deadlines',
+#         'current': 'current_deadlines',
+#         'past': 'past_deadlines'
+#     }.get(deadline_type, 'all_deadlines')
 
-    response = requests.get(f"{API_BASE_URL}/{endpoint}", params={'username': username})
-    return jsonify(response.json()), response.status_code
+#     response = requests.get(f"{API_BASE_URL}/{endpoint}", params={'username': username})
+#     return jsonify(response.json()), response.status_code

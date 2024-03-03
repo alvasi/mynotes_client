@@ -5,24 +5,10 @@ import os
 
 app = Flask(__name__)
 
-API_BASE_URL = "http://deadline-api.cae0f0dcf0fjagfc.uksouth.azurecontainer.io:5000"
+DDL_BASE_URL = "http://deadline-api.cae0f0dcf0fjagfc.uksouth.azurecontainer.io:5000"
+USER_BASE_URL = "http://userapi.fpdsatbedpgcezhj.uksouth.azurecontainer.io:5000"
 
 app.secret_key = os.environ.get("FLASK_SECRET_KEY")
-dbname=os.environ.get("dbname")
-db_password=os.environ.get("db_password")
-host=os.environ.get("host")
-port=os.environ.get("port")
-
-def get_db_connection():
-    server_params = {
-        "dbname": dbname,
-        "host": host,
-        "port": port,
-        "user": dbname,
-        "password": db_password,
-        "client_encoding": "utf-8",
-    }
-    return db.connect(**server_params)
 
 
 # index page for the app
@@ -42,12 +28,14 @@ def login():
 def login_submit():
     username = request.form.get("username")
     password = request.form.get("password")
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    query = "SELECT * FROM notes_user_2 WHERE userid = %s AND password = %s"
-    cursor.execute(query, (username, password))
-    user = cursor.fetchone()
-    conn.close()
+
+    # Prepare the data payload for the API
+    data_payload = {"username": username, "password": password}
+
+    api_url = f"{USER_BASE_URL}/login"
+    response = requests.post(api_url, json=data_payload)
+    if response.ok:
+        user = response.json()
     if user:
         session["name"] = user[1]
         session["username"] = user[3]
@@ -69,45 +57,23 @@ def register_submit():
 
     first_name = data.get("first_name")
     last_name = data.get("last_name")
-    full_name = first_name + " " + last_name
     DoB = data.get("DoB")
     username = data.get("username")
     password = data.get("password")
 
-    try:
-        conn = get_db_connection()
-        curs = conn.cursor()
-        curs.execute(sqlcommand)
-        ret = curs.fetchone()
-    except Exception as e:
-        print(f"An error occurred: {e}")  # Log the error
-    finally:
-        if "curs" in locals():
-            curs.close()
-        if "conn" in locals():
-            conn.close()
-
-    sqlcommand = """
-        INSERT INTO notes_user_2 (name, dob, userid, password) 
-        VALUES (%s, %s, %s, %s)
-    """
-
-    values = (full_name, DoB, username, password)
-
-    try:
-        conn = get_db_connection()
-        curs = conn.cursor()
-        curs.execute(sqlcommand, values)
-        conn.commit()
-    except Exception as e:
-        print(f"An error occurred: {e}")
-    finally:
-        if "curs" in locals():
-            curs.close()
-        if "conn" in locals():
-            conn.close()
-
-    return jsonify({"success": True, "message": "Registration successful"})
+    data_payload = {
+        "first_name": first_name,
+        "last_name": last_name,
+        "DoB": DoB,
+        "username": username,
+        "password": password,
+    }
+    api_url = f"{USER_BASE_URL}/register_submit"
+    response = requests.post(api_url, json=data_payload)
+    if response.ok:
+        return redirect(url_for("login"))
+    else:
+        return jsonify({"message": "Registration not successful"}), 401
 
 
 @app.route("/dashboard")
@@ -130,11 +96,11 @@ def view_deadlines():
     params = {"username": username}
 
     if deadline_type == "past":
-        response = requests.get(f"{API_BASE_URL}/past_deadlines", params=params)
+        response = requests.get(f"{DDL_BASE_URL}/past_deadlines", params=params)
     elif deadline_type == "current":
-        response = requests.get(f"{API_BASE_URL}/current_deadlines", params=params)
+        response = requests.get(f"{DDL_BASE_URL}/current_deadlines", params=params)
     else:
-        response = requests.get(f"{API_BASE_URL}/all_deadlines", params=params)
+        response = requests.get(f"{DDL_BASE_URL}/all_deadlines", params=params)
 
     if response.ok:
         entries = response.json()
@@ -163,7 +129,7 @@ def add_deadline():
     data_payload = {"username": username, "task": task, "deadline": deadline}
 
     # URL of the API endpoint for adding a deadline
-    api_url = f"{API_BASE_URL}/add_deadline"
+    api_url = f"{DDL_BASE_URL}/add_deadline"
 
     # Make a POST request to the API
     response = requests.post(api_url, json=data_payload)
@@ -190,7 +156,7 @@ def mark_deadline_complete():
     data_payload = {"id": deadline_id}
 
     # URL of the API endpoint for marking a deadline as completed
-    api_url = f"{API_BASE_URL}/complete_deadline"
+    api_url = f"{DDL_BASE_URL}/complete_deadline"
 
     # Make a POST request to the API
     response = requests.post(api_url, json=data_payload)

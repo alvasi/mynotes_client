@@ -14,6 +14,8 @@
 </head>
 <body>
     <h1>Deadlines<h1>
-    <p>{{ entries }}</p>
+    {% for entry in entries['entries'] %}
+        <p>{{ entry['task'] }}, {{ entry['date'] }}, {{ entry['completed'] }}</p>
+    {% endfor %}
 </body>
 </html>

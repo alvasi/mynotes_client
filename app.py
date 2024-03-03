@@ -5,7 +5,7 @@ import os
 
 app = Flask(__name__)
 
-API_BASE_URL = "http://deadline-api-server.c7f8dwe8dbfhhfcx.uksouth.azurecontainer.io:5000"
+API_BASE_URL = "http://deadline-api.cae0f0dcf0fjagfc.uksouth.azurecontainer.io:5000/"
 
 app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 
@@ -135,7 +135,7 @@ def view_deadlines():
         return redirect(url_for('login'))
     user_id=session['email']
     params = {
-        'username': '{{ user_id }}'
+        'username': user_id
     }
     response=requests.get(f"{API_BASE_URL}/all_deadlines", params=params)
     if response.ok:

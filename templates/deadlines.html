@@ -3,19 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <title>Deadlines</title>
-    <style>
-        /* Simple CSS for demonstration */
-        body { font-family: Arial, sans-serif; }
-        #add-deadline-form { display: none; margin-top: 20px; }
-        #deadlines-list { list-style-type: none; padding: 0; }
-        #deadlines-list li { margin: 5px 0; }
-        input[type=text], input[type=date] { margin: 5px 0; }
-    </style>
 </head>
 <body>
-    <h1>Deadlines<h1>
+    <h1>Deadlines</h1>
+    <!-- Filter Buttons -->
+    <button onclick="window.location.href='{{ url_for('view_deadlines', type='all') }}'">All</button>
+    <button onclick="window.location.href='{{ url_for('view_deadlines', type='past') }}'">Past</button>
+    <button onclick="window.location.href='{{ url_for('view_deadlines', type='current') }}'">Current</button>
+
+    <!-- Display Deadlines -->
     {% for entry in entries['entries'] %}
-        <p>{{ entry['task'] }}, {{ entry['date'] }}, {{ entry['completed'] }}</p>
+        <p>{{ entry['task'] }}, {{ entry['date'] }}, {{ entry['completed'] }}
+            <!-- Complete Deadline Button -->
+            <form action="{{ url_for('mark_deadline_complete') }}" method="post" style="display: inline;">
+                <input type="hidden" name="deadline_id" value="{{ entry['id'] }}">
+                <input type="submit" value="Mark as Completed">
+            </form>
+        </p>
     {% endfor %}
+        
+    <!-- Add Deadline Form -->
+    <h5>Add a New Deadline</h5>
+    <form action="{{ url_for('add_deadline') }}" method="post">
+        <label for="task">Task:</label><br>
+        <input type="text" id="task" name="task" required><br>
+        <label for="deadline">Deadline (YYYY-MM-DD):</label><br>
+        <input type="date" id="deadline" name="deadline" required><br>
+        <input type="submit" value="Add Deadline">
+    </form>
 </body>
 </html>

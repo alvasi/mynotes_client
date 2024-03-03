@@ -1,9 +1,14 @@
-from flask import Flask, render_template, jsonify, request, session, redirect, url_for
+from flask import Flask, render_template, jsonify, request, session, redirect, url_for, send_from_directory
+from flask_cors import CORS
+
 import psycopg as db
 import requests
 import os
 
+# app = Flask(__name__, static_folder='client/build', static_url_path='')
 app = Flask(__name__)
+
+CORS(app)
 
 API_BASE_URL = "http://deadline-api.cae0f0dcf0fjagfc.uksouth.azurecontainer.io:5000"
 
@@ -22,19 +27,28 @@ def get_db_connection():
     return db.connect(**server_params)
 
 
-# index page for the app
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return send_from_directory('static', 'index.html')
 
 
-# login page
 @app.route("/login")
-def login():
-    return render_template("login.html")
+def login_page():
+    # Render the login.html template on GET request
+    return render_template('login.html')
 
 
-# login submit
+# Serve React App
+@app.route('/app', defaults={'path': ''})
+@app.route('/app/<path:path>')
+def serve_react_app(path):
+    if path and os.path.exists('client/build/' + path):
+        print ("inside serve react app: ", path)
+        return send_from_directory('client/build', path)
+    else:
+        return send_from_directory('client/build', 'index.html')
+
+
 @app.route("/loginsubmit", methods=["POST"])
 def login_submit():
     email = request.form.get("email")
@@ -48,15 +62,17 @@ def login_submit():
     if user:
         session["name"] = user[1]
         session["email"] = user[2]
-        return redirect(url_for("dashboard"))
+        # Redirect to the React-rendered dashboard page
+        return redirect('/app/dashboard')
     else:
-        return jsonify({"message": "User not found"}), 401
+        # Render the login page again with an error message
+        return render_template('login.html', error="Login failed. User not found.")
 
 
 # register page
 @app.route("/register")
 def register():
-    return render_template("register.html")
+    return render_template('register.html')
 
 
 # register submit
@@ -117,17 +133,15 @@ def register_submit():
     return jsonify({"success": True, "message": "Registration successful"})
 
 
-@app.route("/dashboard")
+@app.route("/api/dashboard")
 def dashboard():
     if "email" not in session:
-        # Redirect to login page if not logged in
-        return redirect(url_for("login"))
-    return render_template(
-        "dashboard.html", username=session["name"], user_id=session["email"]
-    )
+        return jsonify({"success": False, "message": "Not logged in"}), 401
+    else:
+        return jsonify({"success": True, "name": session["name"], "email": session["email"]})
 
 
-@app.route("/view_deadlines", methods=["GET"])
+@app.route("/api/view_deadlines", methods=["GET"])
 def view_deadlines():
     if "email" not in session:
         return redirect(url_for("login"))
@@ -144,26 +158,24 @@ def view_deadlines():
         response = requests.get(f"{API_BASE_URL}/all_deadlines", params=params)
 
     if response.ok:
+        print ("successfully fetched response for view deadlines")
         entries = response.json()
-        return render_template(
-            "deadlines.html",
-            entries=entries,
-            username=session["name"],
-            user_id=session["email"],
-            deadline_type=deadline_type,
-        )
+        return jsonify(entries)
     else:
         return jsonify({"error": "Could not retrieve deadlines from the API"}), 500
 
 
-@app.route("/add_deadline", methods=["POST"])
+
+@app.route("/api/add_deadline", methods=["POST"])
 def add_deadline():
     if "email" not in session:
         return redirect(url_for("login"))
-    # Assuming you use form data; adjust as needed if using JavaScript/AJAX
-    task = request.form.get("task")
-    deadline = request.form.get("deadline")
 
+    # Get JSON data from the request
+    data = request.get_json()
+
+    task = data.get("task")
+    deadline = data.get("deadline")
     username = session["email"]
 
     # Prepare the data payload for the API
@@ -176,19 +188,20 @@ def add_deadline():
     response = requests.post(api_url, json=data_payload)
 
     if response.ok:
-        # Redirect or notify the user of success
-        return redirect(url_for("view_deadlines"))
+        return jsonify({"success": True, "message": "Deadline added successfully"})
     else:
-        # Handle errors or notify the user of failure
-        return (
-            jsonify({"error": "Failed to add deadline through API"}),
-            response.status_code,
-        )
+        # Forward the API's response status code and message
+        response_data = response.json() if response.content else {}
+        return jsonify({
+            "error": response_data.get("error", "Failed to add deadline through API")
+        }), response.status_code
 
 
-@app.route("/mark_deadline_complete", methods=["POST"])
+
+@app.route("/api/mark_deadline_complete", methods=["POST"])
 def mark_deadline_complete():
-    deadline_id = request.form.get("deadline_id")
+    data = request.get_json()  # Get data as JSON
+    deadline_id = data.get("deadline_id")
 
     if not deadline_id:
         return jsonify("Missing deadline ID"), 400
@@ -203,11 +216,7 @@ def mark_deadline_complete():
     response = requests.post(api_url, json=data_payload)
 
     if response.ok:
-        # Redirect or notify the user of success
-        return redirect(url_for("view_deadlines"))
+        return jsonify({"success": True, "message": "Deadline marked as completed"})
     else:
-        # Handle errors or notify the user of failure
-        return (
-            jsonify({"error": "Failed to mark deadline as completed through API"}),
-            response.status_code,
-        )
+        return jsonify({"error": "Failed to mark deadline as completed through API"}), response.status_code
+

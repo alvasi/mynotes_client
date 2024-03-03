@@ -8,15 +8,18 @@ app = Flask(__name__)
 API_BASE_URL = "http://deadline-api.cae0f0dcf0fjagfc.uksouth.azurecontainer.io:5000"
 
 app.secret_key = os.environ.get("FLASK_SECRET_KEY")
-
+dbname=os.environ.get("dbname")
+db_password=os.environ.get("db_password")
+host=os.environ.get("host")
+port=os.environ.get("port")
 
 def get_db_connection():
     server_params = {
-        "dbname": "sf23",
-        "host": "db.doc.ic.ac.uk",
-        "port": "5432",
-        "user": "sf23",
-        "password": "3048=N35q4nEsm",
+        "dbname": dbname,
+        "host": host,
+        "port": port,
+        "user": dbname,
+        "password": db_password,
         "client_encoding": "utf-8",
     }
     return db.connect(**server_params)

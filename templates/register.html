@@ -30,14 +30,14 @@
             return
         }
 
-        var re = /(^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+)|(^$)/;
-		if(!re.test($("#email").val())) {
-			alert("wrong email format！");
-			return;
-		}
+        // var re = /(^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+)|(^$)/;
+		// if(!re.test($("#email").val())) {
+		// 	alert("wrong email format！");
+		// 	return;
+		// }
 
-        if(email.value==""){
-            alert("email is empty");
+        if(username.value==""){
+            alert("username is empty");
             return
         }
 
@@ -63,7 +63,7 @@
             'first_name': $('#first_name').val(),
             'last_name': $('#last_name').val(),
             'DoB': $('#DoB').val(),
-            'email': $('#email').val(),
+            'username': $('#username').val(),
             'password': $('#password').val()
         };
         // var info = {'first_name': first_name.value, 'last_name':last_name.value, 'DoB':DoB.value,
@@ -94,11 +94,11 @@
         <div class="inputBox">
             <div class="inputText">
                 <span class="iconfont icon-nickname"></span>
-                    first name:<input type="text" first name: name="first_name" id = "first_name" placeholder="first name" class="input-item">
+                    First name:<input type="text" first name: name="first_name" id = "first_name" placeholder="first name" class="input-item">
             </div>
             <div class="inputText">
                 <span class="iconfont icon-nickname"></span>
-                    last name:<input type="text" name="last_name" id = "last_name" placeholder="last name" class="input-item">
+                    Last name:<input type="text" name="last_name" id = "last_name" placeholder="last name" class="input-item">
             </div>
             <div class="inputText">
                 <span class="iconfont icon-nickname"></span>
@@ -106,15 +106,15 @@
             </div>
             <div class="inputText">
                 <span class="iconfont icon-nickname"></span>
-                email address: <input type="text" name="email" id = "email" placeholder="email address" class="input-item">
+                Username: <input type="text" name="username" id = "username" placeholder="username" class="input-item">
             </div>
             <div class="inputText">
                 <span class="iconfont icon-nickname"></span>
-                password:<input type="password" id = "password" name="password" placeholder="password" class="input-item">
+                Password:<input type="password" id = "password" name="password" placeholder="password" class="input-item">
             </div>
             <div class="inputText">
                 <span class="iconfont icon-nickname"></span>
-                re-enter password:<input type="password" id = "passwordnot" name="passwordnot" placeholder="re-enter password" class="input-item">
+                Re-enter password:<input type="password" id = "passwordnot" name="passwordnot" placeholder="re-enter password" class="input-item">
             </div>
             <div><input type="submit" name = "createUser" class="loginButton" value = "Create Account" onclick="check2pwd()"></div> 
 

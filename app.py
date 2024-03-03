@@ -40,17 +40,17 @@ def login():
 # login submit
 @app.route("/loginsubmit", methods=["POST"])
 def login_submit():
-    email = request.form.get("email")
+    username = request.form.get("username")
     password = request.form.get("password")
     conn = get_db_connection()
     cursor = conn.cursor()
-    query = "SELECT * FROM notes_user WHERE email = %s AND password = %s"
-    cursor.execute(query, (email, password))
+    query = "SELECT * FROM notes_user_2 WHERE userid = %s AND password = %s"
+    cursor.execute(query, (username, password))
     user = cursor.fetchone()
     conn.close()
     if user:
         session["name"] = user[1]
-        session["email"] = user[2]
+        session["username"] = user[3]
         return redirect(url_for("dashboard"))
     else:
         return jsonify({"message": "User not found"}), 401
@@ -71,17 +71,9 @@ def register_submit():
     last_name = data.get("last_name")
     full_name = first_name + " " + last_name
     DoB = data.get("DoB")
-    email = data.get("email")
+    username = data.get("username")
     password = data.get("password")
 
-    # generate unique user_id
-    sqlcommand = (
-        "SELECT COUNT(*) AS row_count FROM my_user WHERE name = '"
-        + first_name
-        + " "
-        + last_name
-        + "';"
-    )
     try:
         conn = get_db_connection()
         curs = conn.cursor()
@@ -95,14 +87,12 @@ def register_submit():
         if "conn" in locals():
             conn.close()
 
-    user_id = (first_name + last_name).lower() + (str)(ret[0] + 1)
-
     sqlcommand = """
-        INSERT INTO notes_user (user_id, name, email, dob, password) 
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO notes_user_2 (name, dob, userid, password) 
+        VALUES (%s, %s, %s, %s)
     """
 
-    values = (user_id, full_name, email, DoB, password)
+    values = (full_name, DoB, username, password)
 
     try:
         conn = get_db_connection()
@@ -122,22 +112,22 @@ def register_submit():
 
 @app.route("/dashboard")
 def dashboard():
-    if "email" not in session:
+    if "username" not in session:
         # Redirect to login page if not logged in
         return redirect(url_for("login"))
     return render_template(
-        "dashboard.html", username=session["name"], user_id=session["email"]
+        "dashboard.html", name=session["name"], username=session["username"]
     )
 
 
 @app.route("/view_deadlines", methods=["GET"])
 def view_deadlines():
-    if "email" not in session:
+    if "username" not in session:
         return redirect(url_for("login"))
 
     deadline_type = request.args.get("type", "all")  # Default to 'all'
-    user_id = session["email"]
-    params = {"username": user_id}
+    username = session["username"]
+    params = {"username": username}
 
     if deadline_type == "past":
         response = requests.get(f"{API_BASE_URL}/past_deadlines", params=params)
@@ -151,8 +141,8 @@ def view_deadlines():
         return render_template(
             "deadlines.html",
             entries=entries,
-            username=session["name"],
-            user_id=session["email"],
+            name=session["name"],
+            username=session["username"],
             deadline_type=deadline_type,
         )
     else:
@@ -161,13 +151,13 @@ def view_deadlines():
 
 @app.route("/add_deadline", methods=["POST"])
 def add_deadline():
-    if "email" not in session:
+    if "username" not in session:
         return redirect(url_for("login"))
     # Assuming you use form data; adjust as needed if using JavaScript/AJAX
     task = request.form.get("task")
     deadline = request.form.get("deadline")
 
-    username = session["email"]
+    username = session["username"]
 
     # Prepare the data payload for the API
     data_payload = {"username": username, "task": task, "deadline": deadline}

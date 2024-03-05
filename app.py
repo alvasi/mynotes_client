@@ -1,4 +1,13 @@
-from flask import Flask, render_template, jsonify, request, session, redirect, url_for, send_from_directory
+from flask import (
+    Flask,
+    render_template,
+    jsonify,
+    request,
+    session,
+    redirect,
+    url_for,
+    send_from_directory,
+)
 from flask_cors import CORS
 
 import psycopg as db
@@ -17,24 +26,24 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
 @app.route("/")
 def index():
-    return send_from_directory('static', 'index.html')
+    return send_from_directory("static", "index.html")
 
 
 @app.route("/login")
 def login_page():
     # Render the login.html template on GET request
-    return render_template('login.html')
+    return render_template("login.html")
 
 
 # Serve React App
-@app.route('/app', defaults={'path': ''})
-@app.route('/app/<path:path>')
+@app.route("/app", defaults={"path": ""})
+@app.route("/app/<path:path>")
 def serve_react_app(path):
-    if path and os.path.exists('client/build/' + path):
-        print ("inside serve react app: ", path)
-        return send_from_directory('client/build', path)
+    if path and os.path.exists("client/build/" + path):
+        print("inside serve react app: ", path)
+        return send_from_directory("client/build", path)
     else:
-        return send_from_directory('client/build', 'index.html')
+        return send_from_directory("client/build", "index.html")
 
 
 # login submit
@@ -54,16 +63,16 @@ def login_submit():
         session["name"] = user[1]
         session["username"] = user[3]
         # Redirect to the React-rendered dashboard page
-        return redirect('/app/dashboard')
+        return redirect("/app/dashboard")
     else:
         # Render the login page again with an error message
-        return render_template('login.html', error="Login failed. User not found.")
+        return render_template("login.html", error="Login failed. User not found.")
 
 
 # register page
 @app.route("/register")
 def register():
-    return render_template('register.html')
+    return render_template("register.html")
 
 
 # register submit
@@ -86,12 +95,11 @@ def register_submit():
     }
     api_url = f"{USER_BASE_URL}/register_submit"
     response = requests.post(api_url, json=data_payload)
-    print (response)
+    print(response)
     if response.ok:
         return jsonify({"message": "Registration successful"})
     else:
         return jsonify({"message": "Registration not successful"})
-
 
 
 @app.route("/api/dashboard")
@@ -99,7 +107,9 @@ def dashboard():
     if "username" not in session:
         return jsonify({"success": False, "message": "Not logged in"}), 401
     else:
-        return jsonify({"success": True, "name": session["name"], "username": session["username"]})
+        return jsonify(
+            {"success": True, "name": session["name"], "username": session["username"]}
+        )
 
 
 @app.route("/api/view_deadlines", methods=["GET"])
@@ -119,12 +129,11 @@ def view_deadlines():
         response = requests.get(f"{DDL_BASE_URL}/all_deadlines", params=params)
 
     if response.ok:
-        print ("successfully fetched response for view deadlines")
+        print("successfully fetched response for view deadlines")
         entries = response.json()
         return jsonify(entries)
     else:
         return jsonify({"error": "Could not retrieve deadlines from the API"}), 500
-
 
 
 @app.route("/api/add_deadline", methods=["POST"])
@@ -134,18 +143,12 @@ def add_deadline():
 
     # Get JSON data from the request
     data = request.get_json()
-
     task = data.get("task")
     deadline = data.get("deadline")
     username = session["username"]
 
-    # Prepare the data payload for the API
     data_payload = {"username": username, "task": task, "deadline": deadline}
-
-    # URL of the API endpoint for adding a deadline
     api_url = f"{DDL_BASE_URL}/add_deadline"
-
-    # Make a POST request to the API
     response = requests.post(api_url, json=data_payload)
 
     if response.ok:
@@ -153,10 +156,67 @@ def add_deadline():
     else:
         # Forward the API's response status code and message
         response_data = response.json() if response.content else {}
-        return jsonify({
-            "error": response_data.get("error", "Failed to add deadline through API")
-        }), response.status_code
+        return (
+            jsonify(
+                {
+                    "error": response_data.get(
+                        "error", "Failed to add deadline through API"
+                    )
+                }
+            ),
+            response.status_code,
+        )
 
+
+@app.route("/api/delete_deadline", methods=["POST"])
+def delete_deadline():
+    data = request.get_json()
+    deadline_id = data.get("deadline_id")
+
+    if not deadline_id:
+        return jsonify("Missing deadline ID"), 400
+
+    data_payload = {"id": deadline_id}
+    api_url = f"{DDL_BASE_URL}/delete_deadline"
+    response = requests.post(api_url, json=data_payload)
+    if response.ok:
+        return jsonify({"success": True, "message": "Deadline deleted"})
+    else:
+        return (
+            jsonify({"error": "Failed to delete deadline through API"}),
+            response.status_code,
+        )
+
+
+@app.route("/api/update_deadline", methods=["POST"])
+def update_deadline():
+    data = request.get_json()
+    deadline_id = data.get("deadline_id")
+    new_task = data.get("task")
+    new_deadline = data.get("deadline")
+
+    if not deadline_id:
+        return jsonify("Missing deadline ID"), 400
+
+    data_payload = {"id": deadline_id, "task": new_task, "date": new_deadline}
+    api_url = f"{DDL_BASE_URL}/update_deadline"
+    response = requests.post(api_url, json=data_payload)
+
+    if response.ok:
+        return jsonify({"success": True, "message": "Deadline updated successfully"})
+    else:
+        # Forward the API's response status code and message
+        response_data = response.json() if response.content else {}
+        return (
+            jsonify(
+                {
+                    "error": response_data.get(
+                        "error", "Failed to edit deadline through API"
+                    )
+                }
+            ),
+            response.status_code,
+        )
 
 
 @app.route("/api/mark_deadline_complete", methods=["POST"])
@@ -167,17 +227,35 @@ def mark_deadline_complete():
     if not deadline_id:
         return jsonify("Missing deadline ID"), 400
 
-    # Prepare the data payload for the API
     data_payload = {"id": deadline_id}
-
-    # URL of the API endpoint for marking a deadline as completed
     api_url = f"{DDL_BASE_URL}/complete_deadline"
-
-    # Make a POST request to the API
     response = requests.post(api_url, json=data_payload)
 
     if response.ok:
         return jsonify({"success": True, "message": "Deadline marked as completed"})
     else:
-        return jsonify({"error": "Failed to mark deadline as completed through API"}), response.status_code
+        return (
+            jsonify({"error": "Failed to mark deadline as completed through API"}),
+            response.status_code,
+        )
 
+
+@app.route("/api/mark_deadline_incomplete", methods=["POST"])
+def mark_deadline_incomplete():
+    data = request.get_json()  # Get data as JSON
+    deadline_id = data.get("deadline_id")
+
+    if not deadline_id:
+        return jsonify("Missing deadline ID"), 400
+
+    data_payload = {"id": deadline_id}
+    api_url = f"{DDL_BASE_URL}/mark_incomplete"
+    response = requests.post(api_url, json=data_payload)
+
+    if response.ok:
+        return jsonify({"success": True, "message": "Deadline marked as incomplete"})
+    else:
+        return (
+            jsonify({"error": "Failed to mark deadline as incomplete through API"}),
+            response.status_code,
+        )

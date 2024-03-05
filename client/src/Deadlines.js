@@ -63,7 +63,7 @@ function Deadlines() {
       });
   };
 
-  // Mark deadliens as complete
+  // Mark deadlines as complete
   const markDeadlineComplete = (deadlineId) => {
     const formData = new FormData();
     formData.append('deadline_id', deadlineId);

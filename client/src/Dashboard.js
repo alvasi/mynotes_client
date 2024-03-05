@@ -21,11 +21,11 @@ function Dashboard() {
       });
   };
   
-  // View notebooks
-  const handleViewNotebooks = () => {
-    // Placeholder for future implementation
-    console.log('Navigate to the notebooks page');
-  };
+  // View notebooks, uncomment when implemented
+  // const handleViewNotebooks = () => {
+  //   // Placeholder for future implementation
+  //   console.log('Navigate to the notebooks page');
+  // };
 
   // Get motivational text
   const refreshEncouragingText = () => {
@@ -53,7 +53,7 @@ function Dashboard() {
     });
   }, [navigate]);
 
-  const drawerWidth = 250;
+  // const drawerWidth = 250;
 
 return (
   <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh',  backgroundColor: '#f8f9fa' }}>

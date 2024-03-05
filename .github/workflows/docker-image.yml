@@ -67,7 +67,7 @@ jobs:
   #         python -m unittest app_test.py
 
   build:
-    # needs: db_connection_test  # build only runs if test is successful
+    needs: javascript-build  # build only runs if test is successful
     runs-on: ubuntu-latest
 
     steps:

@@ -261,15 +261,18 @@ def mark_deadline_incomplete():
             response.status_code,
         )
 
+
 # serverles function
-@app.route('/greeting')
+@app.route("/greeting")
 def greeting():
     rand = random.randint(0, 5)
-    response = requests.get(f"https://greeting-rand.azurewebsites.net/api/http_trigger?&rand={rand}")
+    response = requests.get(
+        f"https://greeting-rand.azurewebsites.net/api/http_trigger?&rand={rand}"
+    )
     if response.status_code == 200:
         data = response.text
         print("Response:", data)
     else:
         print("Error:", response.status_code)
-    #return type: str
+    # return type: str
     return response.text

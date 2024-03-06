@@ -11,6 +11,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import TextField from '@mui/material/TextField';
 
@@ -25,6 +26,8 @@ function Deadlines() {
   const [hoveredDeadlineId, setHoveredDeadlineId] = useState(null); // To handle hover effect for 'Mark as Incomplete' button
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [editingDeadline, setEditingDeadline] = useState(null);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [deleteDialogDeadlineId, setDeleteDialogDeadlineId] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -78,6 +81,7 @@ function Deadlines() {
         console.error('Error fetching deadlines:', error);
       });
   };
+
 
   // Mark deadlines as complete
   const markDeadlineComplete = (deadlineId) => {
@@ -214,6 +218,24 @@ const markDeadlineIncomplete = (deadlineId) => {
   };
 
 
+  const handleOpenDeleteDialog = (deadlineId) => {
+    setDeleteDialogDeadlineId(deadlineId);
+    setOpenDeleteDialog(true);
+  };
+  
+  const handleCloseDeleteDialog = () => {
+    setOpenDeleteDialog(false);
+  };
+
+  const confirmDeleteDeadline = () => {
+    if (deleteDialogDeadlineId) {
+      deleteDeadline(deleteDialogDeadlineId);
+      setDeleteDialogDeadlineId(null);
+      handleCloseDeleteDialog();
+    }
+  };
+  
+
   // Filter deadlines
   const handleFilterChange = (filterType) => {
     fetchDeadlines(filterType);
@@ -316,13 +338,38 @@ const updateDeadlineInState = (updatedDeadlineId, updatedTask, updatedDate) => {
       {showAddForm && (
         <AddDeadlineForm onAddDeadline={handleAddDeadline} />
       )}
+
+      {/* Dialog for confirming delete */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={handleCloseDeleteDialog}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to delete this deadline?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={confirmDeleteDeadline} color="primary" autoFocus>
+            Confirm Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Grid containing cards of deadlines */}
       <Grid container spacing={2}>
         {deadlines.map((deadline) => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={deadline.id}>
             <Paper sx={{ position: 'relative', padding: 2, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <IconButton
                 sx={{ position: 'absolute', top: 8, right: 8 }}
-                onClick={() => deleteDeadline(deadline.id)}
+                onClick={() => handleOpenDeleteDialog(deadline.id)}
               >
                 <DeleteIcon />
               </IconButton>
@@ -372,7 +419,7 @@ const updateDeadlineInState = (updatedDeadlineId, updatedTask, updatedDate) => {
     </Grid>
     </Box>
     
-     {/* for updating deadlines */}
+     {/* Dialog for updating deadlines */}
     <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}> 
     <DialogTitle>Edit Deadline</DialogTitle>
     <DialogContent>
@@ -392,7 +439,7 @@ const updateDeadlineInState = (updatedDeadlineId, updatedTask, updatedDate) => {
         id="deadline"
         label="Deadline Date"
         type="date"
-        fullWidth
+        fullWidthf
         variant="standard"
         InputLabelProps={{
           shrink: true,

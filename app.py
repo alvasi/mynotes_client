@@ -265,7 +265,7 @@ def mark_deadline_incomplete():
 # serverles function
 @app.route("/greeting")
 def greeting():
-    rand = random.randint(0, 5)
+    rand = random.randint(0, 20)
     response = requests.get(
         f"https://greeting-rand.azurewebsites.net/api/http_trigger?&rand={rand}"
     )

@@ -29,8 +29,16 @@ function Dashboard() {
 
   // Get motivational text
   const refreshEncouragingText = () => {
-    // Placeholder functionality - for now it just sets a new hard-coded text
-    setEncouragingText("You can do it!");
+    fetch('/greeting')  // Endpoint for your Flask greeting function
+      .then(response => response.json())
+      .then(data => {
+        if (data.message) {
+          setEncouragingText(data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching encouraging text:', error);
+      });
   };
 
 
@@ -53,7 +61,6 @@ function Dashboard() {
     });
   }, [navigate]);
 
-  // const drawerWidth = 250;
 
 return (
   <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh',  backgroundColor: '#f8f9fa' }}>

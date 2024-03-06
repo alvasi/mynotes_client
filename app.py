@@ -272,7 +272,7 @@ def greeting():
     if response.status_code == 200:
         data = response.text
         print("Response:", data)
+        return jsonify(message=data)
     else:
         print("Error:", response.status_code)
-    # return type: str
-    return response.text
+        return jsonify(error="An error occurred")

@@ -148,7 +148,7 @@ def add_deadline():
     deadline = data.get("deadline")
     username = session["username"]
 
-    data_payload = {"username": username, "task": task, "deadline": deadline}
+    data_payload = {"username": username, "task": task, "date": deadline}
     api_url = f"{DDL_BASE_URL}/add_deadline"
     response = requests.post(api_url, json=data_payload)
 

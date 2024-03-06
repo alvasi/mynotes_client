@@ -208,11 +208,11 @@ def update_deadline():
     response = requests.post(api_url, json=data_payload)
 
     if response.ok:
-        print ("respones is ok!")
+        print("respones is ok!")
         return jsonify({"success": True, "message": "Deadline updated successfully"})
     else:
         error_message = "Failed to edit deadline through API"
-        if response.headers.get('Content-Type') == 'application/json':
+        if response.headers.get("Content-Type") == "application/json":
             try:
                 response_data = response.json()
                 error_message = response_data.get("error", error_message)

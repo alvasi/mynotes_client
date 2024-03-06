@@ -196,28 +196,33 @@ def update_deadline():
     new_task = data.get("task")
     new_deadline = data.get("deadline")
 
+    ## Debugging
+    # print ("deadlind_id: ", deadline_id)
+    # print ("new_task: ", new_task)
+    # print ("new_deadline: ", new_deadline)
     if not deadline_id:
         return jsonify("Missing deadline ID"), 400
 
-    data_payload = {"id": deadline_id, "task": new_task, "date": new_deadline}
+    data_payload = {"id": deadline_id, "task": new_task, "deadline": new_deadline}
     api_url = f"{DDL_BASE_URL}/update_deadline"
     response = requests.post(api_url, json=data_payload)
 
     if response.ok:
+        print ("respones is ok!")
         return jsonify({"success": True, "message": "Deadline updated successfully"})
     else:
-        # Forward the API's response status code and message
-        response_data = response.json() if response.content else {}
-        return (
-            jsonify(
-                {
-                    "error": response_data.get(
-                        "error", "Failed to edit deadline through API"
-                    )
-                }
-            ),
-            response.status_code,
-        )
+        error_message = "Failed to edit deadline through API"
+        if response.headers.get('Content-Type') == 'application/json':
+            try:
+                response_data = response.json()
+                error_message = response_data.get("error", error_message)
+            except ValueError:
+                # response.text is not JSON, use it as the error message
+                error_message = response.text
+        else:
+            error_message = response.text
+
+        return jsonify({"error": error_message}), response.status_code
 
 
 @app.route("/api/mark_deadline_complete", methods=["POST"])

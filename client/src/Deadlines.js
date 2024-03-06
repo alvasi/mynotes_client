@@ -7,6 +7,13 @@ import AddDeadlineForm from './AddDeadlineForm';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import LogoutIcon from '@mui/icons-material/Logout';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import TextField from '@mui/material/TextField';
+
 import FilterButtons from './FilterButtons';
 
 function Deadlines() {
@@ -16,18 +23,24 @@ function Deadlines() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [hoveredDeadlineId, setHoveredDeadlineId] = useState(null); // To handle hover effect for 'Mark as Incomplete' button
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [editingDeadline, setEditingDeadline] = useState(null);
+
   const navigate = useNavigate();
   const location = useLocation();
   const drawerWidth = 200;
 
+  // Ensure that data is updated when browser refreshes
   useEffect(() => {
-    // If the location state has deadlines, use that instead of fetching
+    fetchDeadlines('all'); 
+  }, []); //ensures this effect runs once on mount
+  
+  useEffect(() => {
     if (location.state?.deadlines) {
       setDeadlines(location.state.deadlines);
-    } else {
-      fetchDeadlines('all'); // Fetch all deadlines initially
     }
   }, [location.state]);
+  
 
   // Toggle the sidebar
   const toggleDrawer = (open) => (event) => {
@@ -214,7 +227,62 @@ const markDeadlineIncomplete = (deadlineId) => {
   }
 
 
+  // Update a deadline
+  const handleUpdateDeadline = (deadlineId, newTask, newDeadline) => {
+    fetch('/api/update_deadline', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        deadline_id: deadlineId,
+        task: newTask,
+        deadline: newDeadline,
+      }),
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        setDeadlines(deadlines.map(dl => {
+          if (dl.id === deadlineId) {
+            return { ...dl, task: newTask, date: newDeadline };
+          }
+          return dl;
+        }));
+        setOpenEditDialog(false); // Close the dialog
+        updateDeadlineInState(deadlineId, newTask, newDeadline);
+      }
+    })
+    .catch(error => {
+      console.error('Error updating deadline:', error);
+    });
+  };
+  
+
+  // Called after successfully updating the deadline
+  // Format the date to 'DD/MM/YYYY' before setting it. 
+const updateDeadlineInState = (updatedDeadlineId, updatedTask, updatedDate) => {
+  setDeadlines(deadlines.map(dl => {
+    if (dl.id === updatedDeadlineId) {
+      const formattedDate = new Date(updatedDate).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+      return { ...dl, task: updatedTask, date: formattedDate };
+    }
+    return dl;
+  }));
+};
+
+
    return (
+    <>
     <Box sx={{ p: 4, flexGrow: 1 }}>
       <IconButton onClick={toggleDrawer(true)} edge="start" color="inherit" aria-label="menu">
         <MenuIcon />
@@ -258,6 +326,15 @@ const markDeadlineIncomplete = (deadlineId) => {
               >
                 <DeleteIcon />
               </IconButton>
+              <IconButton
+                sx={{ position: 'absolute', top: 8, right: 40 }}
+                onClick={() => {
+                  setEditingDeadline({ id: deadline.id, task: deadline.task, date: deadline.date });
+                  setOpenEditDialog(true);
+                }}
+              >
+                <EditIcon />
+              </IconButton>
               <Typography gutterBottom variant="subtitle1">
                 {deadline.task}
               </Typography>
@@ -294,6 +371,43 @@ const markDeadlineIncomplete = (deadlineId) => {
       ))}
     </Grid>
     </Box>
+    
+     {/* for updating deadlines */}
+    <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}> 
+    <DialogTitle>Edit Deadline</DialogTitle>
+    <DialogContent>
+      <TextField
+        autoFocus
+        margin="dense"
+        id="task"
+        label="Task"
+        type="text"
+        fullWidth
+        variant="standard"
+        value={editingDeadline ? editingDeadline.task : ''}
+        onChange={(e) => setEditingDeadline({ ...editingDeadline, task: e.target.value })}
+      />
+      <TextField
+        margin="dense"
+        id="deadline"
+        label="Deadline Date"
+        type="date"
+        fullWidth
+        variant="standard"
+        InputLabelProps={{
+          shrink: true,
+        }}
+        value={editingDeadline ? editingDeadline.date : ''}
+        onChange={(e) => setEditingDeadline({ ...editingDeadline, date: e.target.value })}
+      />
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={() => setOpenEditDialog(false)}>Cancel</Button>
+      <Button onClick={() => handleUpdateDeadline(editingDeadline.id, editingDeadline.task, editingDeadline.date)}>Update</Button>
+    </DialogActions>
+    </Dialog>
+    </>
+      
   );
 }
 

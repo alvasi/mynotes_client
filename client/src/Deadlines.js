@@ -15,6 +15,7 @@ function Deadlines() {
   const [error, setError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [hoveredDeadlineId, setHoveredDeadlineId] = useState(null); // To handle hover effect for 'Mark as Incomplete' button
   const navigate = useNavigate();
   const location = useLocation();
   const drawerWidth = 200;
@@ -102,6 +103,42 @@ function Deadlines() {
       console.error('Error:', error);
     });
   };
+
+
+  // Mark deadlines as incomplete
+const markDeadlineIncomplete = (deadlineId) => {
+  fetch('/api/mark_deadline_incomplete', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ deadline_id: deadlineId }),
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+  .then(data => {
+    if(data.success) {
+      // Optimistically update the deadline to 'incomplete'
+      setDeadlines(deadlines.map(dl => {
+        if (dl.id === deadlineId) {
+          return { ...dl, completed: false };
+        }
+        return dl;
+      }));
+    } else {
+      // Handle any error messages from the server
+      setError(data.error || 'Failed to mark deadline as incomplete');
+    }
+  })
+  .catch((error) => {
+    setError('Failed to mark deadline as incomplete');
+    console.error('Error:', error);
+  });
+};
 
 
   // Add a deadline
@@ -228,14 +265,20 @@ function Deadlines() {
                 {deadline.date}
               </Typography>
               {deadline.completed ? (
-              <Button
-                variant="outlined"
-                startIcon={<CheckCircleOutlineIcon />}
-                disabled
-                sx={{ mt: 'auto' }} // Push the button to the bottom
-              >
-                Completed
-              </Button>
+               <div
+               onMouseEnter={() => setHoveredDeadlineId(deadline.id)}
+               onMouseLeave={() => setHoveredDeadlineId(null)}
+                >
+                <Button
+                  variant={hoveredDeadlineId === deadline.id ? "contained" : "outlined"}
+                  startIcon={<CheckCircleOutlineIcon />}
+                  onClick={() => hoveredDeadlineId === deadline.id && markDeadlineIncomplete(deadline.id)}
+                  sx={{ mt: 'auto' }} // Push the button to the bottom
+                  disabled={hoveredDeadlineId !== deadline.id}
+                >
+                  {hoveredDeadlineId === deadline.id ? "Mark as Incomplete" : "Completed"}
+                </Button>
+             </div>
             ) : (
               <Button
                 variant="contained"

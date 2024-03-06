@@ -6,6 +6,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import AddDeadlineForm from './AddDeadlineForm'; 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import LogoutIcon from '@mui/icons-material/Logout';
+import DeleteIcon from '@mui/icons-material/Delete';
 import FilterButtons from './FilterButtons';
 
 function Deadlines() {
@@ -17,6 +18,7 @@ function Deadlines() {
   const navigate = useNavigate();
   const location = useLocation();
   const drawerWidth = 200;
+
   useEffect(() => {
     // If the location state has deadlines, use that instead of fetching
     if (location.state?.deadlines) {
@@ -133,6 +135,35 @@ function Deadlines() {
   };
 
 
+  // Delete a deadline
+  const deleteDeadline = (deadlineId) => {
+    fetch('/api/delete_deadline', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ deadline_id: deadlineId }),
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        // Remove the deleted deadline from the state
+        setDeadlines(deadlines.filter(dl => dl.id !== deadlineId));
+      } else {
+        console.error('Failed to delete the deadline');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+  };
+
+
   // Filter deadlines
   const handleFilterChange = (filterType) => {
     fetchDeadlines(filterType);
@@ -144,6 +175,7 @@ function Deadlines() {
   if (error) {
     return <Typography color="error">{error}</Typography>;
   }
+
 
    return (
     <Box sx={{ p: 4, flexGrow: 1 }}>
@@ -182,7 +214,13 @@ function Deadlines() {
       <Grid container spacing={2}>
         {deadlines.map((deadline) => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={deadline.id}>
-            <Paper sx={{ padding: 2, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <Paper sx={{ position: 'relative', padding: 2, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <IconButton
+                sx={{ position: 'absolute', top: 8, right: 8 }}
+                onClick={() => deleteDeadline(deadline.id)}
+              >
+                <DeleteIcon />
+              </IconButton>
               <Typography gutterBottom variant="subtitle1">
                 {deadline.task}
               </Typography>

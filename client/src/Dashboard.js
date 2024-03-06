@@ -143,7 +143,7 @@ return (
             {encouragingText}
           </Typography>
           <IconButton
-            sx={{ position: 'absolute', bottom: 16, right: 16 }}
+            sx={{ position: 'absolute', top: 16, right: 16 }}
             onClick={refreshEncouragingText}
           >
             <CachedIcon />

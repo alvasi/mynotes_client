@@ -3,6 +3,7 @@ name: Docker Image CI
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   python-formatting:
@@ -69,7 +70,7 @@ jobs:
           cd client
           npm run build
 
-  build:
+  build_to_ghcr:
     needs: [unit_tests, javascript-build]  # build only runs if test is successful
     runs-on: ubuntu-latest
 
@@ -94,3 +95,26 @@ jobs:
           push: true
           tags: ghcr.io/alvasi/central-api:latest
           platforms: linux/amd64
+
+  deploy_to_aci:
+    # if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    needs: build_to_ghcr
+    steps:
+      - name: 'Login via Azure CLI'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 'Deploy to Azure Container Instances'
+        uses: 'azure/aci-deploy@v1'
+        with:
+          resource-group: sse_group
+          dns-name-label: central-api
+          image: ghcr.io/alvasi/central-api:latest
+          registry-login-server: ghcr.io
+          registry-username: alvasi
+          registry-password: ${{ secrets.USER_TOKEN }}
+          secure-environment-variables: FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }}
+          name: central-api
+          location: 'UK South'

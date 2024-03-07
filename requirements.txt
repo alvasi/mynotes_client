@@ -9,6 +9,7 @@ Flask==3.0.0
 Flask-Cors==4.0.0
 idna==3.6
 importlib-metadata==6.8.0
+iniconfig==2.0.0
 itsdangerous==2.1.2
 Jinja2==3.1.2
 lxml==4.9.3
@@ -19,12 +20,16 @@ openpyxl==3.1.2
 packaging==23.2
 pathspec==0.11.2
 platformdirs==4.1.0
+pluggy==1.4.0
 psycopg==3.1.13
 psycopg-binary==3.1.13
 pycodestyle==2.11.1
 pyflakes==3.1.0
+pytest==8.0.2
 python-dotenv==1.0.0
 requests==2.31.0
+requests-mock==1.11.0
+six==1.16.0
 tomli==2.0.1
 typing_extensions==4.8.0
 urllib3==2.1.0

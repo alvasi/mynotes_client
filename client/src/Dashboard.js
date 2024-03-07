@@ -21,11 +21,23 @@ function Dashboard() {
       });
   };
   
-  // View notebooks, uncomment when implemented
-  // const handleViewNotebooks = () => {
-  //   // Placeholder for future implementation
-  //   console.log('Navigate to the notebooks page');
-  // };
+  // View notebooks
+  const handleViewNotes = () => {
+    fetch('/api/view_notes', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      navigate('/notes', { state: { notes: data } }); 
+    })
+    .catch(error => {
+      console.error('Error fetching notes:', error);
+    });
+  };
+  
 
   // Get motivational text
   const refreshEncouragingText = () => {
@@ -108,7 +120,7 @@ return (
           My Deadlines
         </Button>
 
-        {/* Placeholder for My Notebooks Button */}
+        {/* Placeholder for My Notes Button */}
         <Button
           variant="contained"
           sx={{
@@ -118,9 +130,9 @@ return (
             fontSize: '1rem', // Increase font size inside the button
             ml: 2, // Add margin to the left
           }}
-          // onClick={handleViewNotebooks} // Uncomment when the function is implemented
+          onClick={handleViewNotes} 
         >
-          My Notebooks
+          My Notes
         </Button>
       </Box>
 

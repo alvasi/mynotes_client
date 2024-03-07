@@ -21,9 +21,11 @@ app = Flask(__name__)
 
 CORS(app)
 
+
 DDL_BASE_URL = "http://deadline-api.cae0f0dcf0fjagfc.uksouth.azurecontainer.io:5000"
 USER_BASE_URL = "http://user-api.b2f5h7gdc7hmhqhy.uksouth.azurecontainer.io:5000"
 NOTES_BASE_URL = "http://notesapi.g3cxeje0gvbagsav.uksouth.azurecontainer.io:5000"
+
 
 app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 

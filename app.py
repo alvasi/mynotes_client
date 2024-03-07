@@ -14,13 +14,17 @@ import psycopg as db
 import requests
 import os
 import random
+from datetime import datetime
+
 
 app = Flask(__name__)
 
 CORS(app)
 
-DDL_BASE_URL = "http://deadline-api.cae0f0dcf0fjagfc.uksouth.azurecontainer.io:5000"
+DDL_BASE_URL = "http://deadline-api.uksouth.azurecontainer.io"
+# DDL_BASE_URL = "http://deadline-api.cae0f0dcf0fjagfc.uksouth.azurecontainer.io:5000"
 USER_BASE_URL = "http://userapi.fpdsatbedpgcezhj.uksouth.azurecontainer.io:5000"
+NOTES_BASE_URL = "http://notesapi.g3cxeje0gvbagsav.uksouth.azurecontainer.io:5000"
 
 app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
@@ -196,28 +200,33 @@ def update_deadline():
     new_task = data.get("task")
     new_deadline = data.get("deadline")
 
+    ## Debugging
+    # print ("deadlind_id: ", deadline_id)
+    # print ("new_task: ", new_task)
+    # print ("new_deadline: ", new_deadline)
     if not deadline_id:
         return jsonify("Missing deadline ID"), 400
 
-    data_payload = {"id": deadline_id, "task": new_task, "date": new_deadline}
+    data_payload = {"id": deadline_id, "task": new_task, "deadline": new_deadline}
     api_url = f"{DDL_BASE_URL}/update_deadline"
     response = requests.post(api_url, json=data_payload)
 
     if response.ok:
+        print("respones is ok!")
         return jsonify({"success": True, "message": "Deadline updated successfully"})
     else:
-        # Forward the API's response status code and message
-        response_data = response.json() if response.content else {}
-        return (
-            jsonify(
-                {
-                    "error": response_data.get(
-                        "error", "Failed to edit deadline through API"
-                    )
-                }
-            ),
-            response.status_code,
-        )
+        error_message = "Failed to edit deadline through API"
+        if response.headers.get("Content-Type") == "application/json":
+            try:
+                response_data = response.json()
+                error_message = response_data.get("error", error_message)
+            except ValueError:
+                # response.text is not JSON, use it as the error message
+                error_message = response.text
+        else:
+            error_message = response.text
+
+        return jsonify({"error": error_message}), response.status_code
 
 
 @app.route("/api/mark_deadline_complete", methods=["POST"])
@@ -265,14 +274,110 @@ def mark_deadline_incomplete():
 # serverles function
 @app.route("/greeting")
 def greeting():
-    rand = random.randint(0, 5)
+    rand = random.randint(0, 20)
     response = requests.get(
         f"https://greeting-rand.azurewebsites.net/api/http_trigger?&rand={rand}"
     )
     if response.status_code == 200:
         data = response.text
         print("Response:", data)
+        return jsonify(message=data)
     else:
         print("Error:", response.status_code)
-    # return type: str
-    return response.text
+        return jsonify(error="An error occurred")
+
+
+# Notes
+@app.route("/api/view_notes", methods=["GET"])
+def view_notes():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    username = session["username"]
+    params = {"username": username}
+    response = requests.get(f"{NOTES_BASE_URL}/retrieve_notes", params=params)
+
+    if response.ok:
+        notes = response.json()
+        return jsonify(notes)
+    else:
+        return (
+            jsonify({"error": "Could not retrieve notes from the API"}),
+            response.status_code,
+        )
+
+
+@app.route("/api/add_note", methods=["POST"])
+def add_note():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    data = request.get_json()
+    color = data.get("color")
+    content = data.get("content")
+    username = session["username"]
+    time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    data_payload = {
+        "username": username,
+        "color": color,
+        "content": content,
+        "time": time,
+    }
+    response = requests.post(f"{NOTES_BASE_URL}/create_note", json=data_payload)
+
+    if response.ok:
+        return jsonify({"success": True, "message": "Note added successfully"})
+    else:
+        return (
+            jsonify({"error": "Failed to add note through API"}),
+            response.status_code,
+        )
+
+
+@app.route("/api/update_note", methods=["POST"])
+def update_note():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    data = request.get_json()
+    note_id = data.get("note_id")
+    color = data.get("color")
+    content = data.get("content")
+    time = data.get("time", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+    data_payload = {
+        "note_id": note_id,
+        "color": color,
+        "content": content,
+        "time": time,
+    }
+    response = requests.post(f"{NOTES_BASE_URL}/update_note", json=data_payload)
+
+    if response.ok:
+        return jsonify({"success": True, "message": "Note updated successfully"})
+    else:
+        return (
+            jsonify({"error": "Failed to update note through API"}),
+            response.status_code,
+        )
+
+
+@app.route("/api/delete_note", methods=["POST"])
+def delete_note():
+    data = request.get_json()
+    note_id = data.get("note_id")
+
+    if not note_id:
+        return jsonify("Missing note ID"), 400
+
+    data_payload = {"note_id": note_id}
+    response = requests.post(f"{NOTES_BASE_URL}/delete_note", json=data_payload)
+
+    if response.ok:
+        return jsonify({"success": True, "message": "Note deleted successfully"})
+    else:
+        return (
+            jsonify({"error": "Failed to delete note through API"}),
+            response.status_code,
+        )

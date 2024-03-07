@@ -151,23 +151,15 @@ def add_deadline():
     deadline = data.get("deadline")
     username = session["username"]
 
-    data_payload = {"username": username, "task": task, "date": deadline}
+    data_payload = {"username": username, "task": task, "deadline": deadline}
     api_url = f"{DDL_BASE_URL}/add_deadline"
     response = requests.post(api_url, json=data_payload)
 
     if response.ok:
         return jsonify({"success": True, "message": "Deadline added successfully"})
     else:
-        # Forward the API's response status code and message
-        response_data = response.json() if response.content else {}
         return (
-            jsonify(
-                {
-                    "error": response_data.get(
-                        "error", "Failed to add deadline through API"
-                    )
-                }
-            ),
+            jsonify({"error": "Failed to delete deadline through API"}),
             response.status_code,
         )
 

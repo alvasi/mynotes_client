@@ -1,3 +1,4 @@
+import json
 import unittest
 from app import app
 from flask import session
@@ -28,7 +29,6 @@ class TestApp(unittest.TestCase):
         with self.app.session_transaction() as session:
             session["username"] = "test_username"
             session["name"] = "test_name"
-
         response = self.app.get("/api/dashboard")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"true", response.data)

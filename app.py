@@ -25,7 +25,8 @@ DDL_BASE_URL = "http://deadline-api.cae0f0dcf0fjagfc.uksouth.azurecontainer.io:5
 USER_BASE_URL = "http://user-api.b2f5h7gdc7hmhqhy.uksouth.azurecontainer.io:5000"
 NOTES_BASE_URL = "http://notesapi.g3cxeje0gvbagsav.uksouth.azurecontainer.io:5000"
 
-app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+# app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+app.secret_key = "mysecretkey"
 
 
 @app.route("/")
@@ -71,6 +72,30 @@ def login_submit():
     else:
         # Render the login page again with an error message
         return render_template("login.html", error="Login failed. User not found.")
+
+
+@app.route("/calendar")
+def calendar():
+    return redirect("/app/calendar")
+
+
+event_data = [{'start': "2024-03-08T00:00:00.000Z", 'end': "2024-03-09T00:00:00.000Z", 'title': "title"}]
+
+@app.route('/api/events', methods=['GET'])
+def get_events():
+    return jsonify(event_data)
+
+
+@app.route('/api/events', methods=['POST'])
+def add_event():
+    data = request.json
+    event_data.append(data)
+    print(data)
+    # {'start': '2024-03-08T00:00:00.000Z', 'end': '2024-03-09T00:00:00.000Z', 'title': 'q'}
+    return jsonify({'message': 'Event added successfully'})
+
+
+
 
 
 # register page

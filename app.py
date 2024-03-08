@@ -26,7 +26,8 @@ USER_BASE_URL = "http://user-api.b2f5h7gdc7hmhqhy.uksouth.azurecontainer.io:5000
 NOTES_BASE_URL = "http://notesapi.g3cxeje0gvbagsav.uksouth.azurecontainer.io:5000"
 WEATHER_BASE_URL = "http://weather.ayg5fyf9c7fkaxh6.uksouth.azurecontainer.io:5000"
 
-app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+# app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+app.secret_key = "mysecretkey"
 
 
 @app.route("/")
@@ -72,6 +73,75 @@ def login_submit():
     else:
         # Render the login page again with an error message
         return render_template("login.html", error="Login failed. User not found.")
+
+
+@app.route("/calendar")
+def calendar():
+    return redirect("/app/calendar")
+
+
+# event_data = [{'start': "2024-03-08T00:00:00.000Z", 'end': "2024-03-09T00:00:00.000Z", 'title': "title"}]
+event_data = []
+
+
+@app.route("/api/events", methods=["GET"])
+def get_events():
+    server_params = {
+        "dbname": "sf23",
+        "host": "db.doc.ic.ac.uk",
+        "port": "5432",
+        "user": "sf23",
+        "password": "3048=N35q4nEsm",
+        "client_encoding": "utf-8",
+    }
+    conn = db.connect(**server_params)
+    cursor = conn.cursor()
+    userid = "sf1"
+    query = "SELECT * FROM calendar WHERE userid = %s"
+    cursor.execute(query, (userid,))
+    events = cursor.fetchall()
+    conn.close()
+    # event_data = [{'start': event.startTime, 'end': event.endTime, 'title': event.title} for event in events]
+    event_data = [
+        {"start": event[2], "end": event[3], "title": event[4]} for event in events
+    ]
+
+    return jsonify(event_data)
+
+
+@app.route("/api/events", methods=["POST"])
+def add_event():
+    data = request.json
+    event_data.append(data)
+    query = "INSERT INTO calendar (userid, startTime, endTime, title) VALUES (%s,%s, %s,%s) returning id"
+    userid = "sf1"
+    server_params = {
+        "dbname": "sf23",
+        "host": "db.doc.ic.ac.uk",
+        "port": "5432",
+        "user": "sf23",
+        "password": "3048=N35q4nEsm",
+        "client_encoding": "utf-8",
+    }
+    conn = db.connect(**server_params)
+    cursor = conn.cursor()
+    cursor.execute(
+        query,
+        (
+            userid,
+            data["start"],
+            data["end"],
+            data["title"],
+        ),
+    )
+    events = cursor.fetchone()
+    conn.commit()
+    conn.close()
+    print(events)
+
+    # print(data['start']+data['end']+data['title'])
+    # {'start': '2024-03-08T00:00:00.000Z', 'end': '2024-03-09T00:00:00.000Z', 'title': 'q'}
+    return jsonify({"message": "Event added successfully"})
 
 
 # register page
@@ -287,7 +357,10 @@ def view_notes():
 
     username = session["username"]
     params = {"username": username}
+    print("inside view_notes----")
+    print("username: ", username)
     response = requests.get(f"{NOTES_BASE_URL}/retrieve_notes", params=params)
+    print(response.content)
 
     if response.ok:
         notes = response.json()
@@ -304,12 +377,17 @@ def add_note():
     if "username" not in session:
         return redirect(url_for("login"))
 
+    print("inside api/add_note")
     data = request.get_json()
     color = data.get("color")
     content = data.get("content")
     username = session["username"]
     time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    print("username: ", username)
+    print("color: ", color)
+    print("content: ", content)
+    print("time: ", time)
     data_payload = {
         "username": username,
         "color": color,
@@ -318,13 +396,23 @@ def add_note():
     }
     response = requests.post(f"{NOTES_BASE_URL}/create_note", json=data_payload)
 
+    # Try to parse the response JSON outside the condition check
+    try:
+        response_json = response.json()
+    except ValueError:
+        # Handle non-JSON response or empty body
+        response_json = None
+
+    print("Response status code:", response.status_code)
+    print("Response content (non-JSON or empty):", response.content)
+
     if response.ok:
         return jsonify({"success": True, "message": "Note added successfully"})
     else:
-        return (
-            jsonify({"error": "Failed to add note through API"}),
-            response.status_code,
-        )
+        error_message = "Failed to add note through API"
+        if response_json and "error" in response_json:
+            error_message = response_json.get("error", error_message)
+        return jsonify({"error": error_message}), response.status_code
 
 
 @app.route("/api/update_note", methods=["POST"])
@@ -374,6 +462,7 @@ def delete_note():
             response.status_code,
         )
 
+
 @app.route("/api/current_weather", methods=["GET"])
 def current_weather():
     city = request.args.get("city")
@@ -385,4 +474,3 @@ def current_weather():
         return jsonify(weather_data)
     else:
         return jsonify({"error": "Could not retrieve weather data from the API"}), 500
-

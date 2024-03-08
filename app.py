@@ -187,6 +187,24 @@ def dashboard():
         )
 
 
+@app.route("/api/delete_account", methods=["POST"])
+def delete_account():
+    if "username" not in session:
+        return redirect(url_for("login"))
+    username = session["username"]
+    data_payload = {"username": username}
+    api_url = f"{USER_BASE_URL}/delete_account"
+    response = requests.post(api_url, json=data_payload)
+
+    if response.ok:
+        return jsonify({"success": True, "message": "Account deleted"})
+    else:
+        return (
+            jsonify({"error": "Failed to delete account"}),
+            response.status_code,
+        )
+
+
 @app.route("/api/view_deadlines", methods=["GET"])
 def view_deadlines():
     if "username" not in session:

@@ -75,19 +75,16 @@ def login_submit():
         return render_template("login.html", error="Login failed. User not found.")
 
 
-
-
-
-
-
 @app.route("/calendar")
 def calendar():
     return redirect("/app/calendar")
 
 
 # event_data = [{'start': "2024-03-08T00:00:00.000Z", 'end': "2024-03-09T00:00:00.000Z", 'title': "title"}]
-event_data =[]
-@app.route('/api/events', methods=['GET'])
+event_data = []
+
+
+@app.route("/api/events", methods=["GET"])
 def get_events():
     server_params = {
         "dbname": "sf23",
@@ -105,12 +102,14 @@ def get_events():
     events = cursor.fetchall()
     conn.close()
     # event_data = [{'start': event.startTime, 'end': event.endTime, 'title': event.title} for event in events]
-    event_data = [{'start': event[2], 'end': event[3], 'title': event[4]} for event in events]
+    event_data = [
+        {"start": event[2], "end": event[3], "title": event[4]} for event in events
+    ]
 
     return jsonify(event_data)
 
 
-@app.route('/api/events', methods=['POST'])
+@app.route("/api/events", methods=["POST"])
 def add_event():
     data = request.json
     event_data.append(data)
@@ -126,7 +125,15 @@ def add_event():
     }
     conn = db.connect(**server_params)
     cursor = conn.cursor()
-    cursor.execute(query, (userid,data['start'],data['end'],data['title'],))
+    cursor.execute(
+        query,
+        (
+            userid,
+            data["start"],
+            data["end"],
+            data["title"],
+        ),
+    )
     events = cursor.fetchone()
     conn.commit()
     conn.close()
@@ -134,13 +141,7 @@ def add_event():
 
     # print(data['start']+data['end']+data['title'])
     # {'start': '2024-03-08T00:00:00.000Z', 'end': '2024-03-09T00:00:00.000Z', 'title': 'q'}
-    return jsonify({'message': 'Event added successfully'})
-
-
-
-
-
-
+    return jsonify({"message": "Event added successfully"})
 
 
 # register page
@@ -461,6 +462,7 @@ def delete_note():
             response.status_code,
         )
 
+
 @app.route("/api/current_weather", methods=["GET"])
 def current_weather():
     city = request.args.get("city")
@@ -472,4 +474,3 @@ def current_weather():
         return jsonify(weather_data)
     else:
         return jsonify({"error": "Could not retrieve weather data from the API"}), 500
-

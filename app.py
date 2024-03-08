@@ -96,7 +96,9 @@ def get_events():
     }
     conn = db.connect(**server_params)
     cursor = conn.cursor()
-    userid = "sf1"
+    if "username" not in session:
+        return redirect(url_for("login"))
+    userid = session["username"]
     query = "SELECT * FROM calendar WHERE userid = %s"
     cursor.execute(query, (userid,))
     events = cursor.fetchall()
@@ -114,7 +116,9 @@ def add_event():
     data = request.json
     event_data.append(data)
     query = "INSERT INTO calendar (userid, startTime, endTime, title) VALUES (%s,%s, %s,%s) returning id"
-    userid = "sf1"
+    if "username" not in session:
+        return redirect(url_for("login"))
+    userid = session["username"]
     server_params = {
         "dbname": "sf23",
         "host": "db.doc.ic.ac.uk",
@@ -280,10 +284,6 @@ def update_deadline():
     new_task = data.get("task")
     new_deadline = data.get("deadline")
 
-    ## Debugging
-    # print ("deadlind_id: ", deadline_id)
-    # print ("new_task: ", new_task)
-    # print ("new_deadline: ", new_deadline)
     if not deadline_id:
         return jsonify("Missing deadline ID"), 400
 

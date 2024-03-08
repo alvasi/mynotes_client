@@ -53,6 +53,13 @@ function Dashboard() {
     });
   };
 
+
+  // View calendar
+  const handleViewCalendar = () => {
+    navigate('/calendar'); 
+  };
+
+
   // Get motivational text
   const refreshEncouragingText = () => {
     fetch('/greeting')  // Endpoint for your Flask greeting function
@@ -271,7 +278,7 @@ return (
         justifyContent: 'flex-start', // Align items to the start vertically
       }}
     >
-      {/* My Deadlines and My Notebooks Buttons */}
+      {/* My Deadlines, My Notes, and My Calendar Buttons */}
       <Box sx={{ display: 'flex', flexDirection: 'row',  gap: 10, mb: 4 }}>
         <Button
           variant="contained"
@@ -280,14 +287,12 @@ return (
             width: '200px', // Set width of the button
             height: '60px', // Set height of the button
             fontSize: '1rem', // Increase font size inside the button
-            mr: 2, // Add margin to the right
           }}
           onClick={handleViewDeadlines}
         >
           My Deadlines
         </Button>
 
-        {/* Placeholder for My Notebooks Button */}
         <Button
           variant="contained"
           sx={{
@@ -295,11 +300,23 @@ return (
             width: '200px', // Set width of the button
             height: '60px', // Set height of the button
             fontSize: '1rem', // Increase font size inside the button
-            ml: 2, // Add margin to the left
           }}
           onClick={handleViewNotes} 
         >
           My Notes
+        </Button>
+
+        <Button
+          variant="contained"
+          sx={{
+            borderRadius: 16, // Rounded edges
+            width: '200px', // Set width of the button
+            height: '60px', // Set height of the button
+            fontSize: '1rem', // Increase font size inside the button
+          }}
+          onClick={handleViewCalendar}
+        >
+          My Calendar
         </Button>
       </Box>
 

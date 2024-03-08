@@ -91,7 +91,7 @@ function Dashboard() {
 
     };
   
-    return weatherConditions[description] || <WaterDropIcon />; // Default icon if no match is found
+    return description ? weatherConditions[description] || <WaterDropIcon /> : null;
   };
 
   const handleCheckWeather = (event) => {
@@ -114,12 +114,12 @@ function Dashboard() {
           });
         } else {
           // Handle any error messages from your API here
-          setWeatherData({ temperature: 'N/A', description: data.error });
+          setWeatherData({ temperature: '', description: data.error });
         }
       })
       .catch(error => {
         console.error('Error:', error);
-        setWeatherData({ temperature: 'N/A', description: 'Could not fetch weather data' });
+        setWeatherData({ temperature: '', description: 'Oops! Try entering another place' });
       });
   };
   
@@ -329,27 +329,45 @@ return (
           onChange={(e) => setCity(e.target.value)}
           sx={{ mr: 1 }}
         />
-        <Button type="submit" variant="contained" color="primary">
+        <Button type="submit" variant="outlined" color="primary" disabled={!city.trim()}>
           Check
         </Button>
       </Box>
-      <br/>
-      {/* Weather Data Display Card */}
-      {weatherData.temperature && (
-        <Card sx={{ minWidth: 300, maxWidth: '70vw', mt: 4, textAlign: 'center' }}>
-          <CardContent>
-            <Typography variant="h5" component="div" sx={{ my: 2 }}>
-              Weather Details
-            </Typography>
-            <Typography sx={{ fontSize: 20, mb: 1.5 }}>
-              {weatherData.temperature}°C
-              <br />
-              {getWeatherIcon(weatherData.description)}
-              {weatherData.description}
-            </Typography>
-          </CardContent>
-        </Card>
-      )}
+
+     {/* Weather Data Display */}
+      {weatherData.temperature ? (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mt: 4,
+            p: 2,
+            backgroundColor: 'rgba(255, 255, 255, 0.5)',
+            borderRadius: '16px',
+            boxShadow: 1,
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.75)',
+              transform: 'scale(1.05)',
+            },
+          }}
+        >
+          <Typography variant="h6" sx={{ mr: 1 }}>
+            {`${weatherData.temperature}°C`}
+          </Typography>
+          {getWeatherIcon(weatherData.description)}
+          <Typography variant="h6" sx={{ ml: 1 }}>
+            {weatherData.description}
+          </Typography>
+        </Box>
+        ) : weatherData.description !== '' ? (
+          // <Typography sx={{ mt: 4, textAlign: 'center', color: 'grey' }}>
+          <Typography variant="subtitle1" style={{ color: 'grey' }}>
+            {weatherData.description}
+          </Typography>
+        ) : null}
+
       <br/><br/>
       {/* Encouraging text Card */}
       <Card sx={{ 

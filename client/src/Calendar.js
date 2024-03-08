@@ -5,7 +5,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import axios from 'axios'; // Import axios for HTTP requests
 const localizer = momentLocalizer(moment); // Create localizer using Moment.js
 
-class SchedulePage extends Component {
+class SchedulePage extends Component {  
   constructor(props) {
     super(props);
 

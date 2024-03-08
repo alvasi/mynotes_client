@@ -2,9 +2,7 @@ import React, { Component } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import 'moment/locale/zh-cn'; // Import Chinese locale
 import axios from 'axios'; // Import axios for HTTP requests
-moment.locale('zh-cn'); // Set Moment.js locale to English
 const localizer = momentLocalizer(moment); // Create localizer using Moment.js
 
 class SchedulePage extends Component {

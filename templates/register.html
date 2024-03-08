@@ -29,12 +29,6 @@
             return
         }
 
-        // var re = /(^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+)|(^$)/;
-		// if(!re.test($("#email").val())) {
-		// 	alert("wrong email format！");
-		// 	return;
-		// }
-
         if(username.value==""){
             alert("username is empty");
             return
@@ -43,8 +37,7 @@
         if(password.value==""){
             alert("password is empty");
             return
-        }
-        
+        } 
 
         if(password.value != passwordnot.value) {  
             alert("re-enter password mismatch!")

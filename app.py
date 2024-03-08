@@ -94,11 +94,25 @@ def get_events():
 
 @app.route("/api/events", methods=["POST"])
 def add_event():
+    if "username" not in session:
+        return redirect(url_for("login"))
+    
     data = request.json
-    data["username"] = session["username"]
-    api_url = f"{CALENDAR_BASE_URL}/add_events"
-    response = requests.post(api_url, json=data)
-    return response.json()
+    event_data.append(data)
+    username = session["username"]
+    data_payload = {
+        "username": username,
+        "start": data["start"],
+        "end": data["end"],
+        "title": data["title"]
+    }
+    response = requests.post(f"{CALENDAR_BASE_URL}/add_events", json=data_payload)
+
+    if response.ok:
+        return jsonify({"success": True,"message": "Event added successfully"})
+    else:
+        return jsonify({"error": "Faild to add even through API"}), response.status_code
+
 
 
 # register page

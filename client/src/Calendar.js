@@ -17,14 +17,18 @@ const SchedulePage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    fetchEvents(); 
+  }, []);
+
+  const fetchEvents = () => {
     axios.get('/api/events')
       .then(response => {
-        setEvents(response.data);
+        setEvents(response.data); // This will update the state and should trigger a re-render
       })
       .catch(error => {
         console.error('Error fetching events:', error);
       });
-  }, []);
+  };
 
 
   const handleNavigateToDashboard = () => {
@@ -40,9 +44,15 @@ const SchedulePage = () => {
         end,
         title,
       };
-      axios.post('/api/events', newEvent)
-        .then(response => {
-          setEvents([...events, response.data]);
+
+      axios.post('/api/events', newEvent, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+        .then(() => {
+          // After successfully adding a new event, fetch all events again
+          fetchEvents();
         })
         .catch(error => {
           console.error('Error saving event:', error);

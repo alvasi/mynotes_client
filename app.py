@@ -104,7 +104,9 @@ def get_events():
     cursor.execute(query, (userid,))
     events = cursor.fetchall()
     conn.close()
-    event_data = [{'start': event.startTime, 'end': event.endTime, 'title': event.title} for event in events]
+    # event_data = [{'start': event.startTime, 'end': event.endTime, 'title': event.title} for event in events]
+    event_data = [{'start': event[2], 'end': event[3], 'title': event[4]} for event in events]
+
     return jsonify(event_data)
 
 
@@ -112,7 +114,7 @@ def get_events():
 def add_event():
     data = request.json
     event_data.append(data)
-    query = "INSERT INTO calendar (userid, startTime, endTime, title) VALUES ('%s','%s', '%s', '%s');"
+    query = "INSERT INTO calendar (userid, startTime, endTime, title) VALUES (%s,%s, %s,%s) returning id"
     userid = "sf1"
     server_params = {
         "dbname": "sf23",
@@ -124,9 +126,13 @@ def add_event():
     }
     conn = db.connect(**server_params)
     cursor = conn.cursor()
-    cursor.execute(query, (userid,data['start'],data['end'],data['title']))
-    # "SELECT * FROM calendar WHERE userid = %s"
-    print(data)
+    cursor.execute(query, (userid,data['start'],data['end'],data['title'],))
+    events = cursor.fetchone()
+    conn.commit()
+    conn.close()
+    print(events)
+
+    # print(data['start']+data['end']+data['title'])
     # {'start': '2024-03-08T00:00:00.000Z', 'end': '2024-03-09T00:00:00.000Z', 'title': 'q'}
     return jsonify({'message': 'Event added successfully'})
 

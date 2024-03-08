@@ -13,13 +13,7 @@ class SchedulePage extends Component {
 
     this.state = {
       events: [
-        {
-          start: moment().toDate(),
-          end: moment()
-            .add(1, "days")
-            .toDate(),
-          title: "Default Event"
-        }
+        
       ] // Initialize events state as empty array
     };
   }

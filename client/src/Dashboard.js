@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button,  Typography, AppBar, Toolbar, Card, CardContent, IconButton } from '@mui/material';
+import {  Menu, MenuItem, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon';
 import CachedIcon from '@mui/icons-material/Cached';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +20,9 @@ function Dashboard() {
   const [city, setCity] = useState('');
   const [weatherData, setWeatherData] = useState({ temperature: '', description: '' });
 
+  const [anchorEl, setAnchorEl] = useState(null); // For user menu
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false); // For initial delete confirmation dialog
+  const [openConfirmDeleteDialog, setOpenConfirmDeleteDialog] = useState(false); // For final delete confirmation dialog
 
   // View deadlines
   const handleViewDeadlines = () => {
@@ -113,6 +117,61 @@ function Dashboard() {
   };
   
   
+  // Delete an account -- Don't try it for fun
+
+  // Handler to open user menu
+  const handleUserMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  // Handler to close user menu
+  const handleUserMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  // Handlers for delete dialog
+  const handleDeleteAccountClick = () => {
+    handleUserMenuClose(); // Close the user menu when delete is clicked
+    setOpenDeleteDialog(true); // Open initial delete confirmation dialog
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setOpenDeleteDialog(false);
+  };
+
+  const handleOpenConfirmDeleteDialog = () => {
+    setOpenDeleteDialog(false); // Close the initial dialog
+    setOpenConfirmDeleteDialog(true); // Open the final confirmation dialog
+  };
+
+  const handleCloseConfirmDeleteDialog = () => {
+    setOpenConfirmDeleteDialog(false); // Close the final confirmation dialog
+  };
+
+  const handleFinalDeleteConfirmation = () => {
+    // API call to delete account
+    fetch('/api/delete_account', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Redirect to login page or handle account deletion success
+        window.location.href = '/login';
+      } else {
+        // Handle account deletion failure
+        console.error('Failed to delete account:', data.error);
+      }
+    })
+    .catch(error => console.error('Error deleting account:', error));
+
+    setOpenConfirmDeleteDialog(false); // Close the final confirmation dialog
+  };
+
 
 
   useEffect(() => {
@@ -142,12 +201,59 @@ return (
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           My Notes
         </Typography>
-        <Typography variant="h6" component="div" sx={{ marginRight: 2}}>
-          {username}     
-        </Typography>
+        <Button color="inherit" onClick={handleUserMenuClick}>
+          {username}
+        </Button>
+        <Menu
+          id="simple-menu"
+          anchorEl={anchorEl}
+          keepMounted
+          open={Boolean(anchorEl)}
+          onClose={handleUserMenuClose}
+        >
+          <MenuItem onClick={handleDeleteAccountClick} sx={{ color: 'error.main' }}>Delete Account</MenuItem>
+        </Menu>
         <Button color="inherit" onClick={() =>  window.location.href = '/login'}>Log out</Button>
       </Toolbar>
     </AppBar>
+
+    {/* Dialog for initial deletion confirmation */}
+    <Dialog
+      open={openDeleteDialog}
+      onClose={handleCloseDeleteDialog}
+      aria-labelledby="delete-dialog-title"
+      aria-describedby="delete-dialog-description"
+    >
+      <DialogTitle id="delete-dialog-title">{"Delete Account?"}</DialogTitle>
+      <DialogContent>
+        <DialogContentText id="delete-dialog-description">
+          Are you sure you want to delete your account? This action cannot be undone.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleCloseDeleteDialog} color="primary">Cancel</Button>
+        <Button onClick={handleOpenConfirmDeleteDialog} color="primary" autoFocus>Delete</Button>
+      </DialogActions>
+    </Dialog>
+
+    {/* Dialog for final confirmation of account deletion */}
+    <Dialog
+      open={openConfirmDeleteDialog}
+      onClose={handleCloseConfirmDeleteDialog}
+      aria-labelledby="confirm-delete-dialog-title"
+      aria-describedby="confirm-delete-dialog-description"
+    >
+      <DialogTitle id="confirm-delete-dialog-title">{"100% Sure?"}</DialogTitle>
+      <DialogContent>
+        <DialogContentText id="confirm-delete-dialog-description">
+          This action cannot be undone. Are you absolutely sure?
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleCloseConfirmDeleteDialog} color="primary">Cancel</Button>
+        <Button onClick={handleFinalDeleteConfirmation} color="primary" autoFocus>Confirm Delete</Button>
+      </DialogActions>
+    </Dialog>
 
     {/* Welcome message */}
     <Typography variant="h3" sx={{ my: 4, textAlign: 'center' }}>

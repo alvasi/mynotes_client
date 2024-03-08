@@ -25,7 +25,7 @@ DDL_BASE_URL = "http://deadline-api.cae0f0dcf0fjagfc.uksouth.azurecontainer.io:5
 USER_BASE_URL = "http://user-api.b2f5h7gdc7hmhqhy.uksouth.azurecontainer.io:5000"
 NOTES_BASE_URL = "http://notesapi.g3cxeje0gvbagsav.uksouth.azurecontainer.io:5000"
 WEATHER_BASE_URL = "http://weather.ayg5fyf9c7fkaxh6.uksouth.azurecontainer.io:5000"
-
+CALENDAR_BASE_URL = "http://calendar.agahg5fuekhrchhc.uksouth.azurecontainer.io:5000"
 # app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 app.secret_key = "mysecretkey"
 
@@ -80,72 +80,24 @@ def calendar():
     return redirect("/app/calendar")
 
 
-# event_data = [{'start': "2024-03-08T00:00:00.000Z", 'end': "2024-03-09T00:00:00.000Z", 'title': "title"}]
 event_data = []
 
 
 @app.route("/api/events", methods=["GET"])
 def get_events():
-    server_params = {
-        "dbname": "sf23",
-        "host": "db.doc.ic.ac.uk",
-        "port": "5432",
-        "user": "sf23",
-        "password": "3048=N35q4nEsm",
-        "client_encoding": "utf-8",
-    }
-    conn = db.connect(**server_params)
-    cursor = conn.cursor()
-    if "username" not in session:
-        return redirect(url_for("login"))
-    userid = session["username"]
-    query = "SELECT * FROM calendar WHERE userid = %s"
-    cursor.execute(query, (userid,))
-    events = cursor.fetchall()
-    conn.close()
-    # event_data = [{'start': event.startTime, 'end': event.endTime, 'title': event.title} for event in events]
-    event_data = [
-        {"start": event[2], "end": event[3], "title": event[4]} for event in events
-    ]
-
-    return jsonify(event_data)
+    username = session["username"]
+    params = {"username": username}
+    response = requests.get(f"{CALENDAR_BASE_URL}/get_events", params=params)
+    return response.json()
 
 
 @app.route("/api/events", methods=["POST"])
 def add_event():
     data = request.json
-    event_data.append(data)
-    query = "INSERT INTO calendar (userid, startTime, endTime, title) VALUES (%s,%s, %s,%s) returning id"
-    if "username" not in session:
-        return redirect(url_for("login"))
-    userid = session["username"]
-    server_params = {
-        "dbname": "sf23",
-        "host": "db.doc.ic.ac.uk",
-        "port": "5432",
-        "user": "sf23",
-        "password": "3048=N35q4nEsm",
-        "client_encoding": "utf-8",
-    }
-    conn = db.connect(**server_params)
-    cursor = conn.cursor()
-    cursor.execute(
-        query,
-        (
-            userid,
-            data["start"],
-            data["end"],
-            data["title"],
-        ),
-    )
-    events = cursor.fetchone()
-    conn.commit()
-    conn.close()
-    print(events)
-
-    # print(data['start']+data['end']+data['title'])
-    # {'start': '2024-03-08T00:00:00.000Z', 'end': '2024-03-09T00:00:00.000Z', 'title': 'q'}
-    return jsonify({"message": "Event added successfully"})
+    data["username"] = session["username"]
+    api_url = f"{CALENDAR_BASE_URL}/add_events"
+    response = requests.post(api_url, json=data)
+    return response.json()
 
 
 # register page

@@ -4,6 +4,13 @@ import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon';
 import CachedIcon from '@mui/icons-material/Cached';
 import { useNavigate } from 'react-router-dom';
 import { TextField } from '@mui/material';
+import WbSunnyIcon from '@mui/icons-material/WbSunny';
+import CloudIcon from '@mui/icons-material/Cloud';
+import AcUnitIcon from '@mui/icons-material/AcUnit';
+import ThunderstormIcon from '@mui/icons-material/Thunderstorm';
+import WaterDropIcon from '@mui/icons-material/WaterDrop';
+
+
 
 function Dashboard() {
   const [username, setUsername] = useState('');
@@ -56,6 +63,26 @@ function Dashboard() {
       });
   };
 
+  const getWeatherIcon = (description) => {
+    const weatherConditions = {
+      'Sunny': <WbSunnyIcon />,
+      'Clear': <WbSunnyIcon />, 
+      'Partly cloudy': <CloudIcon />, 
+      'Cloudy': <CloudIcon />,
+      'Overcast': <CloudIcon />,
+      'Patchy snow possible': <AcUnitIcon />,
+      'Patchy freezing drizzle possible': <AcUnitIcon />,
+      'Thundery outbreaks possible': <ThunderstormIcon />,
+      'Blowing snow': <AcUnitIcon />,
+      'Blizzard': <AcUnitIcon />,
+      'Fog': <CloudIcon />,
+      'Freezing fog': <AcUnitIcon />,
+
+    };
+  
+    return weatherConditions[description] || <WaterDropIcon />; // Default icon if no match is found
+  };
+
   const handleCheckWeather = (event) => {
     event.preventDefault(); // Prevents the default form submit action
   
@@ -68,10 +95,11 @@ function Dashboard() {
         }
       })
       .then(data => {
+        console.log(data); // Log the data to see what you're receiving
         if (!data.error) {
           setWeatherData({
             temperature: data.temperature,
-            description: data.weather_descriptions
+            description: data.weather_description // Make sure this matches the key in the response
           });
         } else {
           // Handle any error messages from your API here
@@ -182,7 +210,7 @@ return (
           Check
         </Button>
       </Box>
-      <br/><br/>
+      <br/>
       {/* Weather Data Display Card */}
       {weatherData.temperature && (
         <Card sx={{ minWidth: 300, maxWidth: '70vw', mt: 4, textAlign: 'center' }}>
@@ -191,9 +219,10 @@ return (
               Weather Details
             </Typography>
             <Typography sx={{ fontSize: 20, mb: 1.5 }}>
-              Temperature: {weatherData.temperature}°C
+              {weatherData.temperature}°C
               <br />
-              Description: {weatherData.description}
+              {getWeatherIcon(weatherData.description)}
+              {weatherData.description}
             </Typography>
           </CardContent>
         </Card>

@@ -1,85 +1,112 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import axios from 'axios'; // Import axios for HTTP requests
-const localizer = momentLocalizer(moment); // Create localizer using Moment.js
+import axios from 'axios';
+import { AppBar, Box, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemText } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import LogoutIcon from '@mui/icons-material/Logout';
 
-class SchedulePage extends Component {
-  constructor(props) {
-    super(props);
+const localizer = momentLocalizer(moment);
 
-    this.state = {
-      events: [
-        
-      ] // Initialize events state as empty array
-    };
-  }
+const SchedulePage = () => {
+  const [events, setEvents] = useState([]);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const navigate = useNavigate();
 
-  componentDidMount() {
-    // Fetch events data from the database
+  useEffect(() => {
     axios.get('/api/events')
       .then(response => {
-        this.setState({ events: response.data }); // Update events state with data from database
+        setEvents(response.data);
       })
       .catch(error => {
         console.error('Error fetching events:', error);
       });
-  }
+  }, []);
 
-  handleSelect = ({ start, end }) => {
-    const title = window.prompt('New Event name'); // Prompt user for new event name
+
+  const handleNavigateToDashboard = () => {
+    navigate('/dashboard');
+  };
+
+
+  const handleSelect = ({ start, end }) => {
+    const title = window.prompt('New Event name');
     if (title) {
-      this.setState({
-        events: [
-          ...this.state.events,
-          {
-            start,
-            end,
-            title,
-          },
-        ],
-      })
-      // Create new event object
       const newEvent = {
         start,
         end,
-        title
+        title,
       };
-
-      // Send new event data to the server to be saved in the database
-      axios.post('/api/events', JSON.stringify(newEvent),{
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
+      axios.post('/api/events', newEvent)
         .then(response => {
-          // Update events state with new event data from the server
-          this.setState(prevState => ({
-            events: [...prevState.events, response.data]
-          }));
+          setEvents([...events, response.data]);
         })
         .catch(error => {
           console.error('Error saving event:', error);
         });
     }
-  }
+  };
 
-  render() {
-    return (
-      <div className="App">
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <AppBar position="static">
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={() => setIsDrawerOpen(true)}
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            Calendar
+          </Typography>
+        </Toolbar>
+      </AppBar>
+  
+      <Drawer
+        anchor="left"
+        open={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+      >
+        <List>
+          <ListItem button onClick={handleNavigateToDashboard}>
+            <DashboardIcon />
+            <ListItemText primary="Dashboard" />
+          </ListItem>
+          <ListItem button onClick={() => window.location.href = '/login'}>
+            <LogoutIcon />
+            <ListItemText primary="Log Out" />
+          </ListItem>
+        </List>
+      </Drawer>
+  
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          height: 'calc(100vh - 64px)', // Adjust the height based on AppBar height
+        }}
+      >
         <Calendar
           selectable
-          onSelectSlot={this.handleSelect}
+          onSelectSlot={handleSelect}
           localizer={localizer}
           defaultDate={new Date()}
           defaultView="month"
-          events={this.state.events}
-          style={{ height: "100vh" }}
+          events={events}
+          style={{ height: '100%' }} // Use 100% of the container height
         />
-      </div>
-    );
-  }
-}
+      </Box>
+    </Box>
+  );
+      };
+  
 
 export default SchedulePage;

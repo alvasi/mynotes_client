@@ -63,9 +63,10 @@ def login_submit():
 
     api_url = f"{USER_BASE_URL}/login"
     response = requests.post(api_url, json=data_payload)
+    user = None  # Initialize user
     if response.ok:
         user = response.json()
-    if user:
+        # Ensure the response has the expected structure/format
         session["name"] = user[1]
         session["username"] = user[3]
         # Redirect to the React-rendered dashboard page

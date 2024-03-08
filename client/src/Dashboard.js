@@ -145,7 +145,7 @@ return (
         <Typography variant="h6" component="div" sx={{ marginRight: 2}}>
           {username}     
         </Typography>
-        <Button color="inherit" onClick={() => navigate('/login')}>Log out</Button>
+        <Button color="inherit" onClick={() =>  window.location.href = '/login'}>Log out</Button>
       </Toolbar>
     </AppBar>
 

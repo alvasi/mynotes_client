@@ -278,7 +278,7 @@ function Notes() {
             <DashboardIcon />
             <ListItemText primary="Dashboard" />
           </ListItem>
-          <ListItem button onClick={() => navigate('/login')}>
+          <ListItem button onClick={() => window.location.href = '/login'}>
             <LogoutIcon />
             <ListItemText primary="Log Out" />
           </ListItem>

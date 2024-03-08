@@ -24,6 +24,7 @@ CORS(app)
 DDL_BASE_URL = "http://deadline-api.cae0f0dcf0fjagfc.uksouth.azurecontainer.io:5000"
 USER_BASE_URL = "http://user-api.b2f5h7gdc7hmhqhy.uksouth.azurecontainer.io:5000"
 NOTES_BASE_URL = "http://notesapi.g3cxeje0gvbagsav.uksouth.azurecontainer.io:5000"
+WEATHER_BASE_URL = "http://weather.ayg5fyf9c7fkaxh6.uksouth.azurecontainer.io:5000"
 
 # app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 app.secret_key = "mysecretkey"
@@ -397,3 +398,16 @@ def delete_note():
             jsonify({"error": "Failed to delete note through API"}),
             response.status_code,
         )
+
+@app.route("/api/current_weather", methods=["GET"])
+def current_weather():
+    city = request.args.get("city")
+    params = {"city": city}
+    response = requests.get(f"{WEATHER_BASE_URL}/current_weather", params=params)
+    if response.ok:
+        print("successfully fetched weather data")
+        weather_data = response.json()
+        return jsonify(weather_data)
+    else:
+        return jsonify({"error": "Could not retrieve weather data from the API"}), 500
+

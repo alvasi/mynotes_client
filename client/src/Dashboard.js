@@ -3,11 +3,15 @@ import { Box, Button,  Typography, AppBar, Toolbar, Card, CardContent, IconButto
 import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon';
 import CachedIcon from '@mui/icons-material/Cached';
 import { useNavigate } from 'react-router-dom';
+import { TextField } from '@mui/material';
 
 function Dashboard() {
   const [username, setUsername] = useState('');
   const [encouragingText, setEncouragingText] = useState("You can do it!");
   const navigate = useNavigate();
+  const [city, setCity] = useState('');
+  const [weatherData, setWeatherData] = useState({ temperature: '', description: '' });
+
 
   // View deadlines
   const handleViewDeadlines = () => {
@@ -40,6 +44,36 @@ function Dashboard() {
         console.error('Error fetching encouraging text:', error);
       });
   };
+
+  const handleCheckWeather = (event) => {
+    event.preventDefault(); // Prevents the default form submit action
+  
+    fetch(`/api/current_weather?city=${encodeURIComponent(city)}`)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Could not retrieve weather data');
+        }
+      })
+      .then(data => {
+        if (!data.error) {
+          setWeatherData({
+            temperature: data.temperature,
+            description: data.weather_descriptions
+          });
+        } else {
+          // Handle any error messages from your API here
+          setWeatherData({ temperature: 'N/A', description: data.error });
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        setWeatherData({ temperature: 'N/A', description: 'Could not fetch weather data' });
+      });
+  };
+  
+  
 
 
   useEffect(() => {
@@ -124,6 +158,35 @@ return (
         </Button>
       </Box>
 
+      {/* Weather Check Form */}
+      <Box component="form" onSubmit={handleCheckWeather} sx={{ mb: 2 }}>
+        <TextField
+          label="Check Weather"
+          variant="outlined"
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          sx={{ mr: 1 }}
+        />
+        <Button type="submit" variant="contained" color="primary">
+          Check
+        </Button>
+      </Box>
+      <br/><br/>
+      {/* Weather Data Display Card */}
+      {weatherData.temperature && (
+        <Card sx={{ minWidth: 300, maxWidth: '70vw', mt: 4, textAlign: 'center' }}>
+          <CardContent>
+            <Typography variant="h5" component="div" sx={{ my: 2 }}>
+              Weather Details
+            </Typography>
+            <Typography sx={{ fontSize: 20, mb: 1.5 }}>
+              Temperature: {weatherData.temperature}°C
+              <br />
+              Description: {weatherData.description}
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
       <br/><br/>
       {/* Encouraging text Card */}
       <Card sx={{ 

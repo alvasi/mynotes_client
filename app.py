@@ -403,9 +403,6 @@ def add_note():
         # Handle non-JSON response or empty body
         response_json = None
 
-    print("Response status code:", response.status_code)
-    print("Response content (non-JSON or empty):", response.content)
-
     if response.ok:
         return jsonify({"success": True, "message": "Note added successfully"})
     else:

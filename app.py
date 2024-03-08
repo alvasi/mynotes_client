@@ -356,7 +356,10 @@ def view_notes():
 
     username = session["username"]
     params = {"username": username}
+    print("inside view_notes----")
+    print("username: ", username)
     response = requests.get(f"{NOTES_BASE_URL}/retrieve_notes", params=params)
+    print(response.content)
 
     if response.ok:
         notes = response.json()
@@ -373,12 +376,17 @@ def add_note():
     if "username" not in session:
         return redirect(url_for("login"))
 
+    print("inside api/add_note")
     data = request.get_json()
     color = data.get("color")
     content = data.get("content")
     username = session["username"]
     time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    print("username: ", username)
+    print("color: ", color)
+    print("content: ", content)
+    print("time: ", time)
     data_payload = {
         "username": username,
         "color": color,
@@ -387,13 +395,23 @@ def add_note():
     }
     response = requests.post(f"{NOTES_BASE_URL}/create_note", json=data_payload)
 
+    # Try to parse the response JSON outside the condition check
+    try:
+        response_json = response.json()
+    except ValueError:
+        # Handle non-JSON response or empty body
+        response_json = None
+
+    print("Response status code:", response.status_code)
+    print("Response content (non-JSON or empty):", response.content)
+
     if response.ok:
         return jsonify({"success": True, "message": "Note added successfully"})
     else:
-        return (
-            jsonify({"error": "Failed to add note through API"}),
-            response.status_code,
-        )
+        error_message = "Failed to add note through API"
+        if response_json and "error" in response_json:
+            error_message = response_json.get("error", error_message)
+        return jsonify({"error": error_message}), response.status_code
 
 
 @app.route("/api/update_note", methods=["POST"])

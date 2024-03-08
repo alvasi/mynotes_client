@@ -75,15 +75,36 @@ def login_submit():
         return render_template("login.html", error="Login failed. User not found.")
 
 
+
+
+
+
+
 @app.route("/calendar")
 def calendar():
     return redirect("/app/calendar")
 
 
-event_data = [{'start': "2024-03-08T00:00:00.000Z", 'end': "2024-03-09T00:00:00.000Z", 'title': "title"}]
-
+# event_data = [{'start': "2024-03-08T00:00:00.000Z", 'end': "2024-03-09T00:00:00.000Z", 'title': "title"}]
+event_data =[]
 @app.route('/api/events', methods=['GET'])
 def get_events():
+    server_params = {
+        "dbname": "sf23",
+        "host": "db.doc.ic.ac.uk",
+        "port": "5432",
+        "user": "sf23",
+        "password": "3048=N35q4nEsm",
+        "client_encoding": "utf-8",
+    }
+    conn = db.connect(**server_params)
+    cursor = conn.cursor()
+    userid = "sf1"
+    query = "SELECT * FROM calendar WHERE userid = %s"
+    cursor.execute(query, (userid,))
+    events = cursor.fetchall()
+    conn.close()
+    event_data = [{'start': event.startTime, 'end': event.endTime, 'title': event.title} for event in events]
     return jsonify(event_data)
 
 
@@ -91,9 +112,26 @@ def get_events():
 def add_event():
     data = request.json
     event_data.append(data)
+    query = "INSERT INTO calendar (userid, startTime, endTime, title) VALUES ('%s','%s', '%s', '%s');"
+    userid = "sf1"
+    server_params = {
+        "dbname": "sf23",
+        "host": "db.doc.ic.ac.uk",
+        "port": "5432",
+        "user": "sf23",
+        "password": "3048=N35q4nEsm",
+        "client_encoding": "utf-8",
+    }
+    conn = db.connect(**server_params)
+    cursor = conn.cursor()
+    cursor.execute(query, (userid,data['start'],data['end'],data['title']))
+    # "SELECT * FROM calendar WHERE userid = %s"
     print(data)
     # {'start': '2024-03-08T00:00:00.000Z', 'end': '2024-03-09T00:00:00.000Z', 'title': 'q'}
     return jsonify({'message': 'Event added successfully'})
+
+
+
 
 
 

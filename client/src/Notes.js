@@ -183,17 +183,6 @@ function Notes() {
   };
 
 
-  // Update a note
-  const toggleEditMode = (noteId, content) => {
-    setEditingNoteId(noteId);
-    setTempContent(content);
-  };
-
-  const handleNoteChange = (event) => {
-    setTempContent(event.target.value);
-  };
-
-
   const saveNoteContent = (noteId, color) => {
     const noteData = {
       note_id: noteId,

@@ -217,7 +217,6 @@ const markDeadlineIncomplete = (deadlineId) => {
     });
   };
 
-
   const handleOpenDeleteDialog = (deadlineId) => {
     setDeleteDialogDeadlineId(deadlineId);
     setOpenDeleteDialog(true);

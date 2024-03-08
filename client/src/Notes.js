@@ -32,6 +32,10 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import AddIcon from '@mui/icons-material/Add';
 import SendIcon from '@mui/icons-material/Send';
 import CancelIcon from '@mui/icons-material/Cancel';
+import EditIcon from '@mui/icons-material/Edit';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+
 
 
 // Define sticky note colors
@@ -48,13 +52,19 @@ function Notes() {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [newNoteColor, setNewNoteColor] = useState('Yellow');
   const [newNoteContent, setNewNoteContent] = useState('');
+
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [deleteDialogNoteId, setDeleteDialogNoteId] = useState(null); 
+
+  const [editingNoteId, setEditingNoteId] = useState(null);
+  const [tempContent, setTempContent] = useState("");
+
+
   const navigate = useNavigate();
-//   const location = useLocation();
 
   useEffect(() => {
     fetchNotes();
@@ -172,6 +182,42 @@ function Notes() {
     }
   };
 
+
+  // Update a note
+  const toggleEditMode = (noteId, content) => {
+    setEditingNoteId(noteId);
+    setTempContent(content);
+  };
+
+  const handleNoteChange = (event) => {
+    setTempContent(event.target.value);
+  };
+
+
+  const saveNoteContent = (noteId, color) => {
+    const noteData = {
+      note_id: noteId,
+      content: tempContent,
+      color: color, // Preserve the original color
+    };
+  
+    fetch('/api/update_note', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(noteData),
+    })
+    .then(response => response.json())
+    .then(data => {
+      setEditingNoteId(null); // Exit editing mode
+      setTempContent(''); // Clear temporary content
+      fetchNotes(); // Re-fetch notes to reflect changes
+    })
+    .catch(error => console.error('Error updating note:', error));
+  };
+  
+  
+  
+
   const toggleDrawer = (open) => (event) => {
     if (event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) {
         return;
@@ -226,7 +272,7 @@ function Notes() {
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Notes
           </Typography>
-          <Button color="inherit" onClick={() => navigate('/login')}>
+          <Button color="inherit" onClick={() => window.location.href = '/login'}>
             Log out
           </Button>
         </Toolbar>
@@ -262,15 +308,68 @@ function Notes() {
             <Grid item key={note.note_id} xs={12} sm={6} md={3}>
               <Card sx={{ bgcolor: noteColors[note.color] || '#f0f0f0', maxWidth: '40vw', position: 'relative' }}>
               <Box sx={{ position: 'relative', '&:hover button': { visibility: 'visible' } }}>
+              {editingNoteId === note.note_id ? (
+                <>
+                <CardContent>
+                    <TextField
+                        fullWidth
+                        multiline
+                        variant="outlined"
+                        placeholder="Type your note here..."
+                        value={tempContent}
+                        onChange={(e) => setTempContent(e.target.value)}
+                        autoFocus
+                    />
+                    {/* <IconButton
+                        sx={{ position: 'absolute', top: 8, right: 60 }}
+                        onClick={() => saveNoteContent(note.note_id, note.color)}
+                    >
+                        <CheckIcon />
+                    </IconButton> */}
+                </CardContent>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', position: 'absolute', right: 8, bottom: 8 }}>
+                    <IconButton
+                        onClick={() => {
+                            setEditingNoteId(null);
+                            setTempContent('');
+                        }}
+                    >
+                        <CloseIcon />
+                    </IconButton>
+                    <IconButton
+                        onClick={() => saveNoteContent(note.note_id, note.color)}
+                    >
+                        <CheckIcon />
+                    </IconButton>
+                    </Box>
+                    </>
+            ) : (
                 <CardContent>
                   <Typography variant="body2">{note.content}</Typography>
-                  </CardContent>
+                </CardContent>
+                )}
+
                   <IconButton
-                  sx={{ position: 'absolute', top: 8, right: 8, visibility: 'hidden',}}
-                  onClick={() => handleOpenDeleteDialog(note.note_id)}
-                  >
-                  <DeleteIcon />
-                </IconButton>
+                    sx={{ position: 'absolute', top: 8, right: 8, visibility: 'hidden',}}
+                    onClick={() => handleOpenDeleteDialog(note.note_id)}
+                    >
+                    <DeleteIcon />
+                  </IconButton>
+                <IconButton
+                    sx={{
+                        position: 'absolute', 
+                        top: 8, 
+                        right: 45,
+                        visibility: 'hidden', 
+                    }}
+                    onClick={() => {
+                        setEditingNoteId(note.note_id);
+                        setTempContent(note.content);
+                      }}
+                >
+              <EditIcon />
+            </IconButton>
                 </Box>
               </Card>
             </Grid>
